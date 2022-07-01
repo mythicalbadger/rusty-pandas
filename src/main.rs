@@ -11,7 +11,7 @@ fn gen_vec(n: usize) -> Vec<f64> {
 }
 
 fn main() {
-    let n = 1_000_000;
+    let n = 10_000_000;
     let st = Instant::now();
     let test = gen_vec(n);
     let end = st.elapsed();
@@ -35,6 +35,11 @@ fn main() {
     let test_mean= df.mean();
     let end = st.elapsed();
     println!("Calculated mean ({}) in {:.2?}", test_mean, end); 
+
+    let st = Instant::now();
+    let test_min= df.min();
+    let end = st.elapsed();
+    println!("Calculated seq min ({}) in {:.2?}", test_min, end); 
 }
 
 #[cfg(test)]
