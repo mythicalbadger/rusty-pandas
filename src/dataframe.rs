@@ -3,6 +3,7 @@
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use std::ops::Deref;
+use std::fs;
 
 pub struct DataFrame<> {
     data: Vec<f64>,
@@ -104,7 +105,15 @@ impl DataFrame {
         }
     }
 
-    fn add_seq(&self, other: DataFrame) -> DataFrame {
-        let zipped = &self.data.iter().zip(other.iter());
-    }
+}
+
+pub fn read_csv(filename: &str) -> DataFrame {
+    let file = fs::read_to_string(filename).expect("Something went wrong when reading");
+    let data: Vec<f64> = file.trim().split("\r\n").map(|x| {
+        match x.parse::<f64>() {
+            Ok(f) => f,
+            Err(_) => f64::NAN
+        }
+    }).collect();
+    DataFrame::new(data)
 }
