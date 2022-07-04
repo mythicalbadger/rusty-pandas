@@ -2,6 +2,7 @@
 
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
+use std::ops::Deref;
 
 pub struct DataFrame<> {
     data: Vec<f64>,
@@ -10,6 +11,14 @@ pub struct DataFrame<> {
 impl std::fmt::Display for DataFrame {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self.data)
+    }
+}
+
+impl Deref for DataFrame {
+    type Target = Vec<f64>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
     }
 }
 
@@ -93,5 +102,9 @@ impl DataFrame {
             None => f64::MIN,
             Some(&i) => i
         }
+    }
+
+    fn add_seq(&self, other: DataFrame) -> DataFrame {
+        let zipped = &self.data.iter().zip(other.iter());
     }
 }
