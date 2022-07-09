@@ -1,9 +1,27 @@
 #![allow(dead_code)]
-
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use std::ops::Deref;
 use std::fs;
+
+pub enum DataType {
+    Str, Num, Bool, NaN
+}
+
+pub struct DataNum {
+    data_type: DataType,
+    value: f64
+}
+
+pub struct DataStr {
+    data_type: DataType,
+    value: String
+}
+
+pub struct DataBool {
+    data_type: DataType,
+    value: bool
+}
 
 pub struct DataFrame<> {
     data: Vec<f64>,
@@ -104,7 +122,6 @@ impl DataFrame {
             Some(&i) => i
         }
     }
-
 }
 
 pub fn read_csv(filename: &str) -> DataFrame {
