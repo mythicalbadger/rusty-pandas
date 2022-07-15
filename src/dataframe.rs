@@ -1,136 +1,125 @@
 #![allow(dead_code)]
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
-use std::ops::Deref;
+use rayon::prelude::*;
 use std::fs;
+use crate::series::Series;
+use std::ops::Index;
+use std::fmt::{Display, Formatter, Result};
 
-pub enum DataType {
-    Str, Num, Bool, NaN
+#[derive(Debug)]
+pub struct DataFrame {
+    header_row: Vec<String>, 
+    cols: Vec<Series>,
+    rows: Vec<Series>,
+    pub size: usize
 }
 
-pub struct DataNum {
-    data_type: DataType,
-    value: f64
-}
-
-pub struct DataStr {
-    data_type: DataType,
-    value: String
-}
-
-pub struct DataBool {
-    data_type: DataType,
-    value: bool
-}
-
-pub struct DataFrame<> {
-    data: Vec<f64>,
-}
-
-impl std::fmt::Display for DataFrame {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self.data)
+impl Display for DataFrame {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        let out: Vec<String> = self.header_row.iter().zip(&self.cols).map(|(h, d)| format!("{h}: {d}")).collect();
+        write!(f, "{:?}", out.join(", "))
     }
 }
 
-impl Deref for DataFrame {
-    type Target = Vec<f64>;
+impl Index<usize> for DataFrame {
+    type Output = Series;
 
-    fn deref(&self) -> &Self::Target {
-        &self.data
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.rows[idx]
     }
 }
 
 impl DataFrame {
-    const LOWER_PAR_BOUND: i64 = 8192;
-
-    /// Constructor for the DataFrame
-    pub fn new(data: Vec<f64>) -> DataFrame {
-        DataFrame { data }
+    const LOWER_PAR_BOUND: usize = 8192;
+    
+    /// Generates the default header row
+    fn gen_default_header(len: usize) -> Vec<String> {
+        (0..len).into_par_iter().map(|x| x.to_string()).collect()
     }
 
-    /// General use HOF for calling sequential/parllel depending on size of DataFrame
-    fn seq_or_par<T>(&self, seq: &dyn Fn(&Self) -> T, par: &dyn Fn(&Self) -> T) -> T {
-        if self.size() < DataFrame::LOWER_PAR_BOUND { seq(&self) }
-        else { par(&self) }
+    /// Returns reference to row/column and appropriate header depending on axis
+    fn parse_axis(&self, axis: usize) -> (&Vec<Series>, Option<Vec<String>>) {
+        if axis == 0 {
+            (&self.cols, Some(self.header_row.clone()))
+        }
+        else {
+            (&self.rows, None)
+        }
+    }
+
+    /// Constructor for the DataFrame
+    pub fn new(data: Vec<Series>, header_row: Option<Vec<String>>) -> DataFrame {
+        let rows = transpose(&data);
+        let size = rows.len() * data.len();
+        DataFrame { 
+            header_row : header_row.unwrap_or(DataFrame::gen_default_header(rows[0].size())), 
+            cols : data, 
+            rows,
+            size 
+        }
     }
 
     /// Returns the length/size of DataFrame
-    pub fn size(&self) -> i64 {
-        self.data.len() as i64
+    pub fn size(&self) -> usize {
+        self.cols.len() as usize
     }
 
-    /// Sums the values inside the DataFrame
-    pub fn sum(&self) -> f64 {
-        self.seq_or_par(&DataFrame::seq_sum, &DataFrame::par_sum)
-    }
-
-    /// Sums the values inside the DataFrame sequentially
-    pub fn seq_sum(&self) -> f64 {
-        (&self.data).iter().sum()
-    }
-
-    /// Sums the values inside the DataFrame in parallel
-    pub fn par_sum(&self) -> f64 {
-        (&self.data).into_par_iter().sum()
+    /// Sums dataframe - columns: 0, rows: 1
+    pub fn sum(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new(df.par_iter().map(|s| s.sum()).collect(), header)
     }
 
     /// Calculates the mean of values inside the DataFrame
-    pub fn mean(&self) -> f64 {
-        self.sum() / self.size() as f64
+    pub fn mean(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new( df.par_iter().map(|s| s.mean()).collect(), header )
     }
 
-    /// Returns a DataFrame with all positive/absolute values
-    pub fn abs(&self) -> DataFrame {
-        self.seq_or_par(&DataFrame::seq_abs, &DataFrame::par_abs)
+    /// Calculates the minimum of values inside the DataFrame
+    pub fn min(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new( df.par_iter().map(|s| s.min()).collect(), header )
     }
+}
 
-    /// Converts DataFrame values to absolute sequentially
-    fn seq_abs(&self) -> DataFrame {
-        DataFrame::new((&self.data).iter()
-                    .map(|x| x.abs())
-                    .collect())
-    }
-
-    /// Converts DataFrame values to absolute in parallel
-    fn par_abs(&self) -> DataFrame {
-        DataFrame::new((&self.data).into_par_iter()
-                    .map(|x| x.abs())
-                    .collect())
-    }
-
-    pub fn min(&self) -> f64 {
-        self.seq_or_par(&DataFrame::seq_min, &DataFrame::par_min)
-    }
-
-    fn seq_min(&self) -> f64 {
-        // Since floats are partially ordered, have to use custom comparator
-        let m = (&self.data).iter()
-                            .min_by(|&x, &y| x.partial_cmp(y).unwrap()); 
-        match m {
-            None => f64::MIN,
-            Some(&i) => i
-        }
-    }
-
-    fn par_min(&self) -> f64 {
-        // Since floats are partially ordered, have to use custom comparator
-        let m = (&self.data).into_par_iter()
-                            .min_by(|&x, &y| x.partial_cmp(y).unwrap()); 
-        match m {
-            None => f64::MIN,
-            Some(&i) => i
-        }
-    }
+pub fn transpose(mat: &Vec<Series>) -> Vec<Series> {
+    (0..mat[0].size()).into_par_iter()
+        .map(|i| {
+        Series::new( mat.iter()
+                        .map(|c| c.iloc(i))
+                        .collect() 
+                   )    
+    }).collect()
 }
 
 pub fn read_csv(filename: &str) -> DataFrame {
     let file = fs::read_to_string(filename).expect("Something went wrong when reading");
-    let data: Vec<f64> = file.trim().split("\r\n").map(|x| {
-        match x.parse::<f64>() {
-            Ok(f) => f,
-            Err(_) => f64::NAN
-        }
+    let lines: Vec<&str> = file.trim().par_split('\n').collect();
+    let header_row: Vec<String> = lines[0].par_split(',').map(|x| String::from(x)).collect();
+    let data: Vec<Series> = lines[1..].into_par_iter().map(|&line| {
+        Series::new(line.par_split(',').map(|elt| {
+            match elt.parse::<f64>() {
+                Ok(f) => f,
+                Err(_) => f64::NAN
+            }
+        }).collect())
     }).collect();
-    DataFrame::new(data)
+    let df_data = transpose(&data);
+    DataFrame::new(df_data, Some(header_row))
+}
+
+pub fn read_csv_from_folder(folder_name: &str) -> Vec<DataFrame> {
+    let paths: Vec<std::path::PathBuf> = fs::read_dir(folder_name)
+        .expect("Something went wrong")
+        .into_iter()
+        .filter(|x| x.is_ok())
+        .map(|p| p.unwrap().path())
+        .collect();
+
+    paths.par_iter()
+         .filter(|p| p.to_str().unwrap().ends_with(".csv"))
+         .map(|p| read_csv(p.to_str().unwrap()))
+         .collect()
 }

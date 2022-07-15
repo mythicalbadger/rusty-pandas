@@ -1,6 +1,7 @@
 extern crate num_traits;
 extern crate rayon;
 mod dataframe;
+mod series;
 use std::time::Instant;
 
 fn gen_vec(n: usize) -> Vec<f64> {
@@ -41,10 +42,19 @@ fn main() {
     let test_min= df.min();
     let end = st.elapsed();
     println!("Calculated seq min ({}) in {:.2?}", test_min, end); 
-    */
-    let filename = "res/test.csv";
+    let filename = "res/Exp_EverythingCells.csv";
     let df = dataframe::read_csv(filename); 
     println!("{}", df);
+    println!("{}", df.sum(0));
+    println!("{}", df.sum(1));
+    println!("{}", df.size);
+    println!("{}", df.mean(0));
+    println!("{}", df[0]);
+    println!("{}", df.min(1));
+
+    */
+    let dfs = dataframe::read_csv_from_folder("./res/");
+    println!("{:?}", dfs);
 }
 
 #[cfg(test)]
