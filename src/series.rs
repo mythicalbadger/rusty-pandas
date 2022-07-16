@@ -127,6 +127,28 @@ impl Series {
         }
     }
 
+    pub fn mode(&self) -> Series {
+
+        let valid = self.dropna();
+        if valid.is_empty() { return Series::zero() }
+        if valid.size() == 1 { return Series::new(self.data.clone()) }
+
+        // We don't have groupBy identity so going to have to go a bit gonzo
+        // Can't do HashMap/HashSet cause floats can't be hashed T_T
+        let mut indices = vec![];
+        let data = valid.sort();
+        for i in 1..data.size() {
+            if data.iloc(i-1) != data.iloc(i) { indices.push(i) }
+        }
+        let mut groups = vec![];
+        groups.push(&data.data[0..indices[0]]);
+        let mut chunks = indices.par_windows(2).map(|chunk| &data.data[chunk[0]..chunk[1]]).collect();
+        groups.append(&mut chunks);
+        groups.push(&data.data[indices[indices.len()-1]..data.data.len()]);
+
+        Series::new(groups.into_par_iter().max_by_key(|g| g.len()).unwrap().to_vec())
+    }
+
     /// Calculates the minimum of the values inside the Series
     pub fn min(&self) -> Series {
         if self.is_empty() { Series::zero() }

@@ -41,7 +41,7 @@ use glob::glob;
  * - to_dict
  * - transpose 
  * - read_csv from folder (done)
- * - read_csv from glob
+ * - read_csv from glob (done)
  *
  */
 
@@ -158,6 +158,7 @@ impl DataFrame {
         DataFrame::new(data_copy, Some(header_copy))
     }
 
+    /// Writes the contents of the DataFrame to a CSV file
     pub fn to_csv(&self, filename: &str) {
         let header: String = self.header_row.join(",") + "\n";
         let out: Vec<String> = (&self.rows).into_par_iter().map(|r| r.join(",")).collect();
