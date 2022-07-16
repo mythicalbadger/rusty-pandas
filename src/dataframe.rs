@@ -7,6 +7,40 @@ use crate::series::Series;
 use std::ops::Index;
 use std::fmt::{Display, Formatter, Result};
 
+/*
+ *
+ * To IMPLEMENT
+ * - size (done)
+ * - sum (done)
+ * - mean (done)
+ * - min (done)
+ * - apply 
+ * - copy
+ * - count
+ * - cumsum
+ * - describe
+ * - dot
+ * - divide
+ * - dropna
+ * - equals
+ * - from_dict
+ * - head
+ * - tail
+ * - insert
+ * - isna / isnull
+ * - median
+ * - memory usage (cool)
+ * - mode 
+ * - read_csv (done)
+ * - read_excel
+ * - to_csv
+ * - prod
+ * - to_dict
+ * - transpose 
+ * - read_csv from folder
+ *
+ */
+
 #[derive(Debug)]
 pub struct DataFrame {
     header_row: Vec<String>, 
