@@ -53,8 +53,11 @@ fn main() {
     println!("{}", df.min(1));
 
     */
-    let dfs = dataframe::read_csv_from_folder("./res/");
+    let st = Instant::now();
+    let dfs = dataframe::read_csv("./res/example.csv");
     println!("{:?}", dfs);
+    println!("{:?}", dfs.dropna(1));
+    println!("{:?}", st.elapsed().as_secs());
 }
 
 #[cfg(test)]

@@ -14,6 +14,7 @@ use std::fmt::{Display, Formatter, Result};
  * - sum (done)
  * - mean (done)
  * - min (done)
+ * - max ( done)
  * - apply 
  * - copy (done)
  * - count
@@ -27,8 +28,8 @@ use std::fmt::{Display, Formatter, Result};
  * - head
  * - tail
  * - insert
- * - isna / isnull
- * - median
+ * - dropna (done)
+ * - median (done)
  * - memory usage (cool)
  * - mode 
  * - read_csv (done)
@@ -99,6 +100,24 @@ impl DataFrame {
         self.cols.len() as usize
     }
 
+    /// Drops any rows/columns that contain missing values
+    pub fn dropna(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        let is_true = |x: f64| { x == 1.0};
+        DataFrame::new(
+            df.par_iter()
+              .filter(|s| !s.isna().any(is_true))
+              .map(|s| s.clone()).collect(),
+
+              header
+        )
+    }
+
+    /// Alias for dropna
+    pub fn dropnull(&self, axis: usize) -> DataFrame {
+        self.dropna(axis) // clickbaited
+    }
+
     /// Sums dataframe - columns: 0, rows: 1
     pub fn sum(&self, axis: usize) -> DataFrame {
         let (df, header) = self.parse_axis(axis);
@@ -111,10 +130,22 @@ impl DataFrame {
         DataFrame::new( df.par_iter().map(|s| s.mean()).collect(), header )
     }
 
+    /// Calculates the median of values inside the DataFrame
+    pub fn median(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new( df.par_iter().map(|s| s.median()).collect(), header )
+    }
+
     /// Calculates the minimum of values inside the DataFrame
     pub fn min(&self, axis: usize) -> DataFrame {
         let (df, header) = self.parse_axis(axis);
         DataFrame::new( df.par_iter().map(|s| s.min()).collect(), header )
+    }
+
+    /// Calculates the minimum of values inside the DataFrame
+    pub fn max(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new( df.par_iter().map(|s| s.max()).collect(), header )
     }
 
     /// Creates a deepcopy of a DataFrame
