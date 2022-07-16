@@ -154,12 +154,18 @@ impl DataFrame {
         let header_copy = self.header_row.clone();
         DataFrame::new(data_copy, Some(header_copy))
     }
+
+    pub fn to_csv(&self, filename: &str) {
+        let header: String = self.header_row.join(",") + "\n";
+        let out: Vec<String> = (&self.rows).into_par_iter().map(|r| r.join(",")).collect();
+        fs::write(filename, header + &out.join("\n")).expect("Unable to write to file");
+    }
 }
 
 pub fn transpose(mat: &Vec<Series>) -> Vec<Series> {
     (0..mat[0].size()).into_par_iter()
         .map(|i| {
-        Series::new( mat.iter()
+        Series::new( mat.par_iter()
                         .map(|c| c.iloc(i))
                         .collect() 
                    )    
@@ -170,7 +176,7 @@ pub fn read_csv(filename: &str) -> DataFrame {
     let file = fs::read_to_string(filename).expect("Something went wrong when reading");
     let lines: Vec<&str> = file.trim().par_split('\n').collect();
     let header_row: Vec<String> = lines[0].par_split(',').map(|x| String::from(x)).collect();
-    let data: Vec<Series> = lines[1..].into_par_iter().map(|&line| {
+    let data: Vec<Series> = lines[1..].par_iter().map(|&line| {
         Series::new(line.par_split(',').map(|elt| {
             match elt.parse::<f64>() {
                 Ok(f) => f,

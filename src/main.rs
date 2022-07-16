@@ -55,8 +55,8 @@ fn main() {
     */
     let st = Instant::now();
     let dfs = dataframe::read_csv("./res/example.csv");
-    println!("{:?}", dfs);
-    println!("{:?}", dfs.dropna(1));
+    let means = dfs.mean(0);
+    means.to_csv("./res/cowabunga.csv");
     println!("{:?}", st.elapsed().as_secs());
 }
 

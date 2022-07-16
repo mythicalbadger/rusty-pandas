@@ -151,4 +151,13 @@ impl Series {
         }
     }
 
+    pub fn join(&self, token: &str) -> String {
+        let joined: String = (&self.data).into_par_iter().map(|x| {
+            if x.is_nan() { "NaN".to_string() + token}
+            else { x.to_string() + token }
+        }).collect();
+
+        joined[0..joined.len() - token.len()].to_string() + "\n"
+    }
+
 }
