@@ -15,7 +15,7 @@ use std::fmt::{Display, Formatter, Result};
  * - mean (done)
  * - min (done)
  * - apply 
- * - copy
+ * - copy (done)
  * - count
  * - cumsum
  * - describe
@@ -115,6 +115,13 @@ impl DataFrame {
     pub fn min(&self, axis: usize) -> DataFrame {
         let (df, header) = self.parse_axis(axis);
         DataFrame::new( df.par_iter().map(|s| s.min()).collect(), header )
+    }
+
+    /// Creates a deepcopy of a DataFrame
+    pub fn copy(&self) -> DataFrame {
+        let data_copy = self.cols.clone().into_par_iter().map(|col| col.clone()).collect();
+        let header_copy = self.header_row.clone();
+        DataFrame::new(data_copy, Some(header_copy))
     }
 }
 
