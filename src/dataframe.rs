@@ -3,9 +3,11 @@ use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
 use std::fs;
-use crate::series::Series;
+use crate::series::*;
+use num_traits::Zero;
 use std::ops::Index;
 use std::fmt::{Display, Formatter, Result};
+use glob::glob;
 
 /*
  *
@@ -34,11 +36,12 @@ use std::fmt::{Display, Formatter, Result};
  * - mode 
  * - read_csv (done)
  * - read_excel
- * - to_csv
+ * - to_csv (done)
  * - prod
  * - to_dict
  * - transpose 
- * - read_csv from folder
+ * - read_csv from folder (done)
+ * - read_csv from glob
  *
  */
 
@@ -88,7 +91,7 @@ impl DataFrame {
         let rows = transpose(&data);
         let size = rows.len() * data.len();
         DataFrame { 
-            header_row : header_row.unwrap_or(DataFrame::gen_default_header(rows[0].size())), 
+            header_row : header_row.unwrap_or(DataFrame::gen_default_header(rows.get(0).unwrap_or(&Series::zero()).size())), 
             cols : data, 
             rows,
             size 
@@ -163,6 +166,7 @@ impl DataFrame {
 }
 
 pub fn transpose(mat: &Vec<Series>) -> Vec<Series> {
+    if mat.len() == 0 { return mat.to_vec() }
     (0..mat[0].size()).into_par_iter()
         .map(|i| {
         Series::new( mat.par_iter()
@@ -197,6 +201,19 @@ pub fn read_csv_from_folder(folder_name: &str) -> Vec<DataFrame> {
         .collect();
 
     paths.par_iter()
+         .filter(|p| p.to_str().unwrap().ends_with(".csv"))
+         .map(|p| read_csv(p.to_str().unwrap()))
+         .collect()
+}
+
+pub fn read_csv_by_glob(path: &str, expr: &str) -> Vec<DataFrame> {
+    let paths: Vec<std::path::PathBuf> = glob(format!("{}{}", path, expr).as_str()).expect("Failed to read pattern")
+        .par_bridge()
+        .filter(|p| p.is_ok())
+        .map(|p| p.unwrap())
+        .collect();
+
+    paths.into_par_iter()
          .filter(|p| p.to_str().unwrap().ends_with(".csv"))
          .map(|p| read_csv(p.to_str().unwrap()))
          .collect()

@@ -1,5 +1,6 @@
 extern crate num_traits;
 extern crate rayon;
+extern crate glob;
 mod dataframe;
 mod series;
 use std::time::Instant;
@@ -54,10 +55,9 @@ fn main() {
 
     */
     let st = Instant::now();
-    let dfs = dataframe::read_csv("./res/example.csv");
-    let means = dfs.mean(0);
-    means.to_csv("./res/cowabunga.csv");
-    println!("{:?}", st.elapsed().as_secs());
+    let dfs = dataframe::read_csv_by_glob("/home/mythicalbadger/CellDataExtractor/Data/Slides/Slide 1/ZCS008 series/ZCS008-P_Slide 1_Field 1_B/", "*EverythingCells*");
+    println!("{:?}", dfs.len());
+    println!("{:?}", st.elapsed().as_millis());
 }
 
 #[cfg(test)]
