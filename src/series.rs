@@ -66,28 +66,73 @@ impl Series {
         self.seq_or_par(&Series::seq_sum, &Series::par_sum)
     }
 
-    /// Sums the values inside the Series sequentially
+    /// Sequential implementation of prod
     fn seq_sum(&self) -> Series {
-        Series::new(vec![self.data.iter().filter(|&&x| !x.is_nan()).sum()])
+        Series::new(vec![(&self.dropna().data).iter().sum()])
     }
 
-    /// Sums the values inside the Series in parallel
+    /// Parallel implementation of prod
     fn par_sum(&self) -> Series {
-        Series::new(vec![(&self.data).into_par_iter().filter(|&&x| !x.is_nan()).sum()])
+        Series::new(vec![(&self.dropna().data).par_iter().sum()])
     }
 
-    /// Returns a new series with all non-numerical/NaN values filtered out
+    /// Computes the product of all values inside the Series
+    pub fn prod(&self) -> Series {
+        self.seq_or_par(&Series::seq_prod, &Series::par_prod)
+    }
+
+    /// Sequential implementation of prod
+    fn seq_prod(&self) -> Series {
+        Series::new(vec![(&self.dropna().data).iter().product()])
+    }
+
+    /// Parallel implementation of prod
+    fn par_prod(&self) -> Series {
+        Series::new(vec![(&self.dropna().data).par_iter().product()])
+    }
+
+    /// Returns a new Series with all non-numerical/NaN values filtered out
     pub fn dropna(&self) -> Series {
+        self.seq_or_par(&Series::seq_dropna, &Series::par_dropna)
+    }
+
+    /// Sequential implementation of dropna
+    fn seq_dropna(&self) -> Series {
+        Series::new(self.data.clone().into_iter().filter(|&x| !x.is_nan()).collect())
+    }
+
+    /// Parallel implementation of dropna
+    fn par_dropna(&self) -> Series {
         Series::new(self.data.clone().into_par_iter().filter(|&x| !x.is_nan()).collect())
     }
 
     /// Indicates indices with missing values
     pub fn isna(&self) -> Series {
+        self.seq_or_par(&Series::seq_isna, &Series::par_isna)
+    }
+
+    /// Sequential implementation of isna
+    fn seq_isna(&self) -> Series {
+        Series::new(self.data.clone().into_iter().map(|x| x.is_nan() as i32 as f64).collect())
+    }
+
+    /// Parallel implementation of isna
+    fn par_isna(&self) -> Series {
         Series::new(self.data.clone().into_par_iter().map(|x| x.is_nan() as i32 as f64).collect())
     }
 
     /// Indicates existing (non-missing) values
     pub fn notna(&self) -> Series {
+        self.seq_or_par(&Series::seq_notna, &Series::par_notna)
+    }
+
+    /// Sequential implementation of notna
+    fn seq_notna(&self) -> Series {
+        Series::new(self.data.clone().into_iter().map(|x| !x.is_nan() as i32 as f64).collect())
+    }
+
+    /// Parallel implementation of notna
+    fn par_notna(&self) -> Series {
         Series::new(self.data.clone().into_par_iter().map(|x| !x.is_nan() as i32 as f64).collect())
     }
 
@@ -150,6 +195,23 @@ impl Series {
 
     /// Calculates the variance of values inside the Series
     pub fn var(&self) -> Series {
+        self.seq_or_par(&Series::seq_var, &Series::par_var)
+    }
+
+    /// Sequential implementation of var
+    pub fn seq_var(&self) -> Series {
+        let valid = self.dropna();
+        if valid.is_empty() { return Series::zero() }
+
+        let n = valid.size() as f64;
+        let mean = valid.mean().iloc(0);
+        let variance = valid.data.into_iter().map(|x| pow(x-mean, 2)).sum::<f64>() / (n-1.0);
+
+        Series::new(vec![variance])
+    }
+
+    /// Parallel implementation of var
+    pub fn par_var(&self) -> Series {
         let valid = self.dropna();
         if valid.is_empty() { return Series::zero() }
 
@@ -169,6 +231,24 @@ impl Series {
 
     /// Calculates the minimum of the values inside the Series
     pub fn min(&self) -> Series {
+        self.seq_or_par(&Series::seq_min, &Series::par_min)
+    }
+
+    /// Sequential implementation of min
+    pub fn seq_min(&self) -> Series {
+        if self.is_empty() { Series::zero() }
+        else {
+            let dropna = self.dropna();
+            let m = (&dropna.data)
+                .into_iter()
+                .reduce(|x, y| if x < y {x} else {y})
+                .unwrap();
+            Series::new(vec![*m])
+        }
+    }
+
+    /// Paralell implementation of min
+    pub fn par_min(&self) -> Series {
         if self.is_empty() { Series::zero() }
         else {
             let dropna = self.dropna();
@@ -181,6 +261,24 @@ impl Series {
 
     /// Calculates the maximum of the values inside the Series
     pub fn max(&self) -> Series {
+        self.seq_or_par(&Series::seq_max, &Series::par_max)
+    }
+
+    /// Sequential implementation of max
+    pub fn seq_max(&self) -> Series {
+        if self.is_empty() { Series::zero() }
+        else {
+            let dropna = self.dropna();
+            let m = (&dropna.data)
+                .into_iter()
+                .reduce(|x, y| if x > y {x} else {y})
+                .unwrap();
+            Series::new(vec![*m])
+        }
+    }
+
+    /// Paralell implementation of max
+    pub fn par_max(&self) -> Series {
         if self.is_empty() { Series::zero() }
         else {
             let dropna = self.dropna();
@@ -191,6 +289,12 @@ impl Series {
         }
     }
 
+    /// Applies a function to all elements and returns a new Series
+    pub fn apply(&self, f: fn(f64) -> f64) -> Series {
+        let applied = (&self.data).into_par_iter().map(|x| f(*x)).collect();
+        Series::new(applied)
+    }
+
     /// Joins the Series into string
     pub fn join(&self, token: &str) -> String {
         let joined: String = (&self.data).into_par_iter().map(|x| {
@@ -199,12 +303,6 @@ impl Series {
         }).collect();
 
         joined[0..joined.len() - token.len()].to_string() + "\n"
-    }
-
-    /// Applies a function to all elements and returns a new Series
-    pub fn apply(&self, f: fn(f64) -> f64) -> Series {
-        let applied = (&self.data).into_par_iter().map(|x| f(*x)).collect();
-        Series::new(applied)
     }
 
     /// Extracts a slice from the series
@@ -219,5 +317,4 @@ impl Series {
     pub fn to_vec(&self) -> Vec<f64> {
         self.data.to_vec()
     }
-
 }

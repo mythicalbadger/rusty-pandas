@@ -35,13 +35,13 @@ use std::collections::HashMap;
  * - insert
  * - dropna (done)
  * - median (done)
- * - memory usage (cool)
  * - mode (done)
  * - read_csv (done)
  * - read_excel
  * - to_csv (done)
  * - prod
- * - to_dict
+ * - to_dict (done)
+ * - from_dict (done)
  * - transpose 
  * - read_csv from folder (done)
  * - read_csv from glob (done)
@@ -138,6 +138,11 @@ impl DataFrame {
     pub fn sum(&self, axis: usize) -> DataFrame {
         let (df, header) = self.parse_axis(axis);
         DataFrame::new(df.par_iter().map(|s| s.sum()).collect(), header)
+    }
+
+    pub fn prod(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new(df.par_iter().map(|s| s.prod()).collect(), header)
     }
 
     /// Calculates the mean of values inside the DataFrame

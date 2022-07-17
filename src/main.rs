@@ -35,7 +35,7 @@ fn main() {
     test_map.insert("Column 2".to_string(), vec![10.0, 20.0, 30.0, 40.0, 50.0]);
     test_map.insert("Column 3".to_string(), vec![100.0, 200.0, 300.0, 400.0, 500.0]);
     let df = dataframe::from_hashmap(test_map);
-    println!("{}", df);
+    println!("{}", df.max(0));
     let df_map = df.to_hashmap();
     println!("{:?}", df_map);
 }
