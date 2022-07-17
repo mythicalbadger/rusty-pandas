@@ -39,7 +39,7 @@ use std::collections::HashMap;
  * - read_csv (done)
  * - read_excel
  * - to_csv (done)
- * - prod
+ * - prod (done)
  * - to_dict (done)
  * - from_dict (done)
  * - transpose 
@@ -62,6 +62,17 @@ impl Display for DataFrame {
         write!(f, "{:?}", out.join(", "))
     }
 }
+
+impl PartialEq for DataFrame {
+    fn eq(&self, other: &Self) -> bool {
+        if self.size() != other.size() { return false; }
+
+        self.header_row == other.header_row &&
+        self.cols == other.cols
+    }
+}
+
+impl Eq for DataFrame {}
 
 impl Index<usize> for DataFrame {
     type Output = Series;

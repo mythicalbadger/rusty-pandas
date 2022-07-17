@@ -32,6 +32,14 @@ impl Zero for Series {
     fn is_zero(&self) -> bool { self.is_empty() }
 }
 
+impl PartialEq for Series {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
+
+impl Eq for Series {}
+
 impl Series {
     const LOWER_PAR_BOUND: usize = 8192;
 
