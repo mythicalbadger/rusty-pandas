@@ -215,4 +215,9 @@ impl Series {
         Series::new(slice)
     }
 
+    /// Converts the Series to a Vector of f64
+    pub fn to_vec(&self) -> Vec<f64> {
+        self.data.to_vec()
+    }
+
 }

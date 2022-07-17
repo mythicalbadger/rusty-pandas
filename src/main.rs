@@ -15,46 +15,6 @@ fn gen_vec(n: usize) -> Vec<f64> {
 
 fn main() {
     /*
-    let n = 10_000_000;
-    let st = Instant::now();
-    let test = gen_vec(n);
-    let end = st.elapsed();
-    println!("Generated a vector of {} numbers in {:.2?} seconds", n, end); 
-
-    let df = dataframe::DataFrame::new(
-        test
-    );
-
-    let st = Instant::now();
-    let test_size = df.size();
-    let end = st.elapsed();
-    println!("Calculated size ({}) in {:.2?}", test_size, end); 
-
-    let st = Instant::now();
-    let test_sum = df.sum();
-    let end = st.elapsed();
-    println!("Calculated sum ({}) in {:.2?}", test_sum, end); 
-
-    let st = Instant::now();
-    let test_mean= df.mean();
-    let end = st.elapsed();
-    println!("Calculated mean ({}) in {:.2?}", test_mean, end); 
-
-    let st = Instant::now();
-    let test_min= df.min();
-    let end = st.elapsed();
-    println!("Calculated seq min ({}) in {:.2?}", test_min, end); 
-    let filename = "res/Exp_EverythingCells.csv";
-    let df = dataframe::read_csv(filename); 
-    println!("{}", df);
-    println!("{}", df.sum(0));
-    println!("{}", df.sum(1));
-    println!("{}", df.size);
-    println!("{}", df.mean(0));
-    println!("{}", df[0]);
-    println!("{}", df.min(1));
-
-    */
     let st = Instant::now();
     println!("Reading");
     let df = dataframe::read_csv("./res/example.csv");
@@ -68,7 +28,16 @@ fn main() {
     println!("{:?} to head", st.elapsed().as_secs());
     println!("{}", first);
     println!("{}", second);
-
+    */
+    use std::collections::HashMap;
+    let mut test_map: HashMap<String, Vec<f64>> = HashMap::new();
+    test_map.insert("Column 1".to_string(), vec![1.0, 2.0, 3.0, 4.0, 5.0]);
+    test_map.insert("Column 2".to_string(), vec![10.0, 20.0, 30.0, 40.0, 50.0]);
+    test_map.insert("Column 3".to_string(), vec![100.0, 200.0, 300.0, 400.0, 500.0]);
+    let df = dataframe::from_hashmap(test_map);
+    println!("{}", df);
+    let df_map = df.to_hashmap();
+    println!("{:?}", df_map);
 }
 
 #[cfg(test)]

@@ -8,6 +8,7 @@ use num_traits::Zero;
 use std::ops::Index;
 use std::fmt::{Display, Formatter, Result};
 use glob::glob;
+use std::collections::HashMap;
 
 /*
  *
@@ -206,6 +207,13 @@ impl DataFrame {
         fs::write(filename, header + &out.join("\n")).expect("Unable to write to file");
     }
 
+    /// Converts the DataFrame to a HashMap
+    pub fn to_hashmap(&self) -> HashMap<String, Vec<f64>> {
+        let zipped: Vec<(String, Vec<f64>)> = self.header_row.clone().into_par_iter().zip(self.cols.clone().into_par_iter().map(|s| s.to_vec())).collect();
+        HashMap::from_par_iter(zipped)
+    }
+
+    /// Extracts the first N rows of the DataFrame
     pub fn head(&self, n: usize) -> DataFrame {
         let sliced = (&self.cols).into_par_iter()
             .map(|x| {
@@ -216,6 +224,7 @@ impl DataFrame {
         DataFrame::new(sliced, Some(self.header_row.clone()))
     }
 
+    /// Extracts the last N rows of the DataFrame
     pub fn tail(&self, n: usize) -> DataFrame {
         let sliced = (&self.cols).into_par_iter()
             .map(|x| {
@@ -280,4 +289,10 @@ pub fn read_csv_by_glob(path: &str, expr: &str) -> Vec<DataFrame> {
          .filter(|p| p.to_str().unwrap().ends_with(".csv"))
          .map(|p| read_csv(p.to_str().unwrap()))
          .collect()
+}
+
+pub fn from_hashmap(data_map: HashMap<String, Vec<f64>>) -> DataFrame {
+    let header: Vec<String> = data_map.keys().map(|x| x.clone()).collect();
+    let data: Vec<Series> = data_map.values().map(|x| Series::new(x.clone())).collect();
+    DataFrame::new(data, Some(header))
 }
