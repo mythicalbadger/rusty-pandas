@@ -97,6 +97,16 @@ impl DataFrame {
             size 
         }
     }
+    
+    /// Extract a row from the DataFrame
+    pub fn irow(&self, row: usize) -> Series {
+        self.rows[row].clone()
+    }
+
+    /// Extract a column from the DataFrame
+    pub fn icol(&self, col: usize) -> Series {
+        self.cols[col].clone()
+    }
 
     /// Returns the length/size of DataFrame
     pub fn size(&self) -> usize {
@@ -139,13 +149,33 @@ impl DataFrame {
         DataFrame::new( df.par_iter().map(|s| s.median()).collect(), header )
     }
 
+    /// Calculates the mode of values inside the DataFrame
+    pub fn mode(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new( df.par_iter().map(|s| s.mode()).collect(), header )
+    }
+
+    /// Calculates the variance of values inside the DataFrame
+    pub fn var(&self, axis: usize) -> DataFrame {
+        let valid = self.dropna(axis);
+        let (df, header) = valid.parse_axis(axis);
+        DataFrame::new( df.par_iter().map(|s| s.var()).collect(), header )
+    }
+
+    /// Calculates the standard deviation of values inside the DataFrame
+    pub fn std(&self, axis: usize) -> DataFrame {
+        let valid = self.dropna(axis);
+        let (df, header) = valid.parse_axis(axis);
+        DataFrame::new( df.par_iter().map(|s| s.std()).collect(), header )
+    }
+
     /// Calculates the minimum of values inside the DataFrame
     pub fn min(&self, axis: usize) -> DataFrame {
         let (df, header) = self.parse_axis(axis);
         DataFrame::new( df.par_iter().map(|s| s.min()).collect(), header )
     }
 
-    /// Calculates the minimum of values inside the DataFrame
+    /// Calculates the maximum of values inside the DataFrame
     pub fn max(&self, axis: usize) -> DataFrame {
         let (df, header) = self.parse_axis(axis);
         DataFrame::new( df.par_iter().map(|s| s.max()).collect(), header )

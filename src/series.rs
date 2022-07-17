@@ -54,7 +54,7 @@ impl Series {
 
     /// Access a specific index inside the Series
     pub fn iloc(&self, idx: usize) -> f64 {
-        *self.data.get(idx).expect("Not a valid index")
+        *self.data.get(idx).expect(format!("Not a valid index. Attempted to access index {} on data {:?}", idx, self.data).as_str())
     }
 
     /// General use HOF for calling sequential/parallel depending on size of Series
@@ -100,6 +100,7 @@ impl Series {
 
     /// Calculates the mean of the values inside the Series
     pub fn mean(&self) -> Series {
+        if self.is_empty() { return Series::zero() }
         Series::new(vec![self.sum().iloc(0) / self.size() as f64])
     }
 
@@ -127,8 +128,8 @@ impl Series {
         }
     }
 
+    /// Calculates the mode of values inside the Series
     pub fn mode(&self) -> Series {
-
         let valid = self.dropna();
         if valid.is_empty() { return Series::zero() }
         if valid.size() == 1 { return Series::new(self.data.clone()) }
@@ -147,6 +148,25 @@ impl Series {
         groups.push(&data.data[indices[indices.len()-1]..data.data.len()]);
 
         Series::new(groups.into_par_iter().max_by_key(|g| g.len()).unwrap().to_vec())
+    }
+
+    /// Calculates the variance of values inside the Series
+    pub fn var(&self) -> Series {
+        let valid = self.dropna();
+        if valid.is_empty() { return Series::zero() }
+
+        let n = valid.size() as f64;
+        let mean = valid.mean().iloc(0);
+        let variance = valid.data.into_par_iter().map(|x| pow(x-mean, 2)).sum::<f64>() / (n-1.0);
+
+        Series::new(vec![variance])
+    }
+
+    /// Calculates the standard deviation of values inside the Series
+    pub fn std(&self) -> Series {
+        let variance = self.var();
+        if variance.is_empty() { Series::zero(); }
+        Series::new(vec![variance.iloc(0).sqrt()])
     }
 
     /// Calculates the minimum of the values inside the Series

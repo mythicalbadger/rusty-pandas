@@ -56,9 +56,14 @@ fn main() {
 
     */
     let st = Instant::now();
-    let data = series::Series::new(vec![1.0, 1.0,1.0,1.0,2.0,2.0,2.0,3.0,3.0,3.0]);
-    println!("{:?}", data.mode());
-    println!("{:?}", st.elapsed().as_millis());
+    let df = dataframe::read_csv("./res/smol.csv");
+    println!("{:?} to read", st.elapsed().as_nanos());
+
+    let st = Instant::now();
+    let s = df.std(0);
+    println!("{:?} to sum", st.elapsed().as_nanos());
+
+    println!("{}", s);
 }
 
 #[cfg(test)]
