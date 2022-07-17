@@ -56,15 +56,19 @@ fn main() {
 
     */
     let st = Instant::now();
-    let df = dataframe::read_csv("./res/smol.csv");
-    println!("{:?} to read", st.elapsed().as_nanos());
+    println!("Reading");
+    let df = dataframe::read_csv("./res/example.csv");
+    println!("{:?} to read", st.elapsed().as_secs());
 
-    let incr = |x: f64| { x+1.0 } ;
+
     let st = Instant::now();
-    let s = df.apply(incr);
-    println!("{:?} to sum", st.elapsed().as_nanos());
+    let first = df.head(1);
+    let second = df.tail(1);
 
-    println!("{}", s);
+    println!("{:?} to head", st.elapsed().as_secs());
+    println!("{}", first);
+    println!("{}", second);
+
 }
 
 #[cfg(test)]

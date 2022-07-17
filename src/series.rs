@@ -1,9 +1,7 @@
 use rayon::iter::IntoParallelIterator;
-use rand::seq::SliceRandom;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
 use num_traits::*;
-use std::iter::Sum;
 use std::ops::*;
 
 #[derive(Debug, Clone)]
@@ -54,7 +52,7 @@ impl Series {
 
     /// Access a specific index inside the Series
     pub fn iloc(&self, idx: usize) -> f64 {
-        *self.data.get(idx).expect(format!("Not a valid index. Attempted to access index {} on data {:?}", idx, self.data).as_str())
+        *self.data.get(idx).expect("Not a valid index")
     }
 
     /// General use HOF for calling sequential/parallel depending on size of Series
@@ -207,6 +205,14 @@ impl Series {
     pub fn apply(&self, f: fn(f64) -> f64) -> Series {
         let applied = (&self.data).into_par_iter().map(|x| f(*x)).collect();
         Series::new(applied)
+    }
+
+    /// Extracts a slice from the series
+    pub fn slice(&self, start: usize, end: usize) -> Series {
+        let start = std::cmp::max(start, 0);
+        let end = std::cmp::min(end, self.size());
+        let slice = self.data[start..end].to_vec();
+        Series::new(slice)
     }
 
 }

@@ -26,11 +26,11 @@ use glob::glob;
  * - describe
  * - dot
  * - divide
- * - dropna
+ * - dropna (done)
  * - equals
  * - from_dict
- * - head
- * - tail
+ * - head (done)
+ * - tail (done)
  * - insert
  * - dropna (done)
  * - median (done)
@@ -205,6 +205,27 @@ impl DataFrame {
         let out: Vec<String> = (&self.rows).into_par_iter().map(|r| r.join(",")).collect();
         fs::write(filename, header + &out.join("\n")).expect("Unable to write to file");
     }
+
+    pub fn head(&self, n: usize) -> DataFrame {
+        let sliced = (&self.cols).into_par_iter()
+            .map(|x| {
+                x.slice(0, n)
+            })
+            .collect();
+
+        DataFrame::new(sliced, Some(self.header_row.clone()))
+    }
+
+    pub fn tail(&self, n: usize) -> DataFrame {
+        let sliced = (&self.cols).into_par_iter()
+            .map(|x| {
+                x.slice(x.size() - n, x.size())
+            })
+            .collect();
+
+        DataFrame::new(sliced, Some(self.header_row.clone()))
+    }
+
 }
 
 pub fn transpose(mat: &Vec<Series>) -> Vec<Series> {
