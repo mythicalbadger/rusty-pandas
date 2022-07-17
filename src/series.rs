@@ -193,6 +193,7 @@ impl Series {
         }
     }
 
+    /// Joins the Series into string
     pub fn join(&self, token: &str) -> String {
         let joined: String = (&self.data).into_par_iter().map(|x| {
             if x.is_nan() { "NaN".to_string() + token}
@@ -200,6 +201,12 @@ impl Series {
         }).collect();
 
         joined[0..joined.len() - token.len()].to_string() + "\n"
+    }
+
+    /// Applies a function to all elements and returns a new Series
+    pub fn apply(&self, f: fn(f64) -> f64) -> Series {
+        let applied = (&self.data).into_par_iter().map(|x| f(*x)).collect();
+        Series::new(applied)
     }
 
 }

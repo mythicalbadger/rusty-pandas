@@ -59,8 +59,9 @@ fn main() {
     let df = dataframe::read_csv("./res/smol.csv");
     println!("{:?} to read", st.elapsed().as_nanos());
 
+    let incr = |x: f64| { x+1.0 } ;
     let st = Instant::now();
-    let s = df.std(0);
+    let s = df.apply(incr);
     println!("{:?} to sum", st.elapsed().as_nanos());
 
     println!("{}", s);

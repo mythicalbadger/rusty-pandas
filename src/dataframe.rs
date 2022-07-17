@@ -17,7 +17,9 @@ use glob::glob;
  * - mean (done)
  * - min (done)
  * - max ( done)
- * - apply 
+ * - variance (done)
+ * - standard deviation (done)
+ * - apply (done)
  * - copy (done)
  * - count
  * - cumsum
@@ -33,7 +35,7 @@ use glob::glob;
  * - dropna (done)
  * - median (done)
  * - memory usage (cool)
- * - mode 
+ * - mode (done)
  * - read_csv (done)
  * - read_excel
  * - to_csv (done)
@@ -179,6 +181,15 @@ impl DataFrame {
     pub fn max(&self, axis: usize) -> DataFrame {
         let (df, header) = self.parse_axis(axis);
         DataFrame::new( df.par_iter().map(|s| s.max()).collect(), header )
+    }
+
+    /// Applies a function to all values
+    pub fn apply(&self, f: fn(f64) -> f64) -> DataFrame {
+        let header = Some(self.header_row.clone());
+        let applied = (&self.cols).into_par_iter()
+            .map(|x| x.apply(f))
+            .collect();
+        DataFrame::new(applied, header)
     }
 
     /// Creates a deepcopy of a DataFrame
