@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use std::fs;
 use crate::series::*;
 use num_traits::Zero;
-use std::ops::Index;
+use std::ops::{Index, Add, Sub, Div, Mul};
 use std::fmt::{Display, Formatter, Result};
 use glob::glob;
 use std::collections::HashMap;
@@ -28,7 +28,7 @@ use std::collections::HashMap;
  * - dot
  * - divide
  * - dropna (done)
- * - equals
+ * - equals (done)
  * - from_dict
  * - head (done)
  * - tail (done)
@@ -251,6 +251,43 @@ impl DataFrame {
         DataFrame::new(sliced, Some(self.header_row.clone()))
     }
 
+    /// Adds a value to all elements in the DataFrame
+    pub fn plus(&self, n: f64) -> DataFrame {
+        // One would think this would be a good opportunity to *apply* our apply but since Rust
+        // won't allow us to capture variables, we can't pass in a func that uses n...
+        let header = Some(self.header_row.clone());
+        let applied = (&self.cols).into_par_iter()
+            .map(|x| x.plus(n))
+            .collect();
+        DataFrame::new(applied, header)
+    }
+
+    /// Subtracts a value to all elements in the DataFrame
+    pub fn sub(&self, n: f64) -> DataFrame {
+        let header = Some(self.header_row.clone());
+        let applied = (&self.cols).into_par_iter()
+            .map(|x| x.sub(n))
+            .collect();
+        DataFrame::new(applied, header)
+    }
+
+    /// Multiplies a value to all elements in the DataFrame
+    pub fn mult(&self, n: f64) -> DataFrame {
+        let header = Some(self.header_row.clone());
+        let applied = (&self.cols).into_par_iter()
+            .map(|x| x.mult(n))
+            .collect();
+        DataFrame::new(applied, header)
+    }
+
+    /// Divides a value to all elements in the DataFrame
+    pub fn div(&self, n: f64) -> DataFrame {
+        let header = Some(self.header_row.clone());
+        let applied = (&self.cols).into_par_iter()
+            .map(|x| x.div(n))
+            .collect();
+        DataFrame::new(applied, header)
+    }
 }
 
 pub fn transpose(mat: &Vec<Series>) -> Vec<Series> {

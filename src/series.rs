@@ -303,6 +303,26 @@ impl Series {
         Series::new(applied)
     }
 
+    /// Element wise addition
+    pub fn plus(&self, n: f64) -> Series {
+        Series::new((&self.data).into_par_iter().map(|x| x + n).collect())
+    }
+
+    /// Element wise subtraction
+    pub fn sub(&self, n: f64) -> Series {
+        Series::new((&self.data).into_par_iter().map(|x| x - n).collect())
+    }
+
+    /// Element wise multiplication
+    pub fn mult(&self, n: f64) -> Series {
+        Series::new((&self.data).into_par_iter().map(|x| x * n).collect())
+    }
+
+    /// Element wise division
+    pub fn div(&self, n: f64) -> Series {
+        Series::new((&self.data).into_par_iter().map(|x| x / n).collect())
+    }
+
     /// Joins the Series into string
     pub fn join(&self, token: &str) -> String {
         let joined: String = (&self.data).into_par_iter().map(|x| {
