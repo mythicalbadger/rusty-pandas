@@ -3,12 +3,15 @@ use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
 use num_traits::*;
 use std::ops::*;
+use pyo3::prelude::*;
 
 #[derive(Debug, Clone)]
+#[pyclass]
 pub struct Series {
     data: Vec<f64> 
 }
 
+#[pymethods]
 impl Series {
     const LOWER_PAR_BOUND: usize = 8192;
 
@@ -19,6 +22,7 @@ impl Series {
     /// let sample_data: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0, 5.0];
     /// let shiny_new_series: Series = Series::new(sample_data);
     /// ```
+    #[new]
     pub fn new(data: Vec<f64>) -> Series {
         Series { data }
     }
@@ -68,17 +72,12 @@ impl Series {
     /// assert_eq!(data.sum(), 15.0);
     /// ```
     pub fn sum(&self) -> Series {
-        self.seq_or_par(&Series::seq_sum, &Series::par_sum)
-    }
-
-    /// Sequential implementation of sum
-    fn seq_sum(&self) -> Series {
-        Series::new(vec![(&self.dropna().data).iter().sum()])
-    }
-
-    /// Parallel implementation of sum
-    fn par_sum(&self) -> Series {
-        Series::new(vec![(&self.dropna().data).par_iter().sum()])
+        if self.size() < Series::LOWER_PAR_BOUND {
+            Series::new(vec![(&self.dropna().data).iter().sum()])
+        }
+        else {
+            Series::new(vec![(&self.dropna().data).par_iter().sum()])
+        }
     }
 
     /// Computes the product of all values inside the Series
@@ -90,17 +89,12 @@ impl Series {
     /// assert_eq!(data.sum(), 120.0);
     /// ```
     pub fn prod(&self) -> Series {
-        self.seq_or_par(&Series::seq_prod, &Series::par_prod)
-    }
-
-    /// Sequential implementation of prod
-    fn seq_prod(&self) -> Series {
-        Series::new(vec![(&self.dropna().data).iter().product()])
-    }
-
-    /// Parallel implementation of prod
-    fn par_prod(&self) -> Series {
-        Series::new(vec![(&self.dropna().data).par_iter().product()])
+        if self.size() < Series::LOWER_PAR_BOUND {
+            Series::new(vec![(&self.dropna().data).iter().product()])
+        }
+        else {
+            Series::new(vec![(&self.dropna().data).par_iter().product()])
+        }
     }
 
     /// Returns a new Series with all non-numerical/NaN values filtered out
@@ -116,17 +110,12 @@ impl Series {
     /// assert_eq!(data.dropna(), expected);
     /// ```
     pub fn dropna(&self) -> Series {
-        self.seq_or_par(&Series::seq_dropna, &Series::par_dropna)
-    }
-
-    /// Sequential implementation of dropna
-    fn seq_dropna(&self) -> Series {
-        Series::new(self.data.clone().into_iter().filter(|&x| !x.is_nan()).collect())
-    }
-
-    /// Parallel implementation of dropna
-    fn par_dropna(&self) -> Series {
-        Series::new(self.data.clone().into_par_iter().filter(|&x| !x.is_nan()).collect())
+        if self.size() < Series::LOWER_PAR_BOUND {
+            Series::new(self.data.clone().into_iter().filter(|&x| !x.is_nan()).collect())
+        }
+        else {
+            Series::new(self.data.clone().into_par_iter().filter(|&x| !x.is_nan()).collect())
+        }
     }
 
     /// Indicates indices with missing values
@@ -142,17 +131,12 @@ impl Series {
     /// assert_eq!(data.isna(), expected);
     /// ```
     pub fn isna(&self) -> Series {
-        self.seq_or_par(&Series::seq_isna, &Series::par_isna)
-    }
-
-    /// Sequential implementation of isna
-    fn seq_isna(&self) -> Series {
-        Series::new(self.data.clone().into_iter().map(|x| x.is_nan() as i32 as f64).collect())
-    }
-
-    /// Parallel implementation of isna
-    fn par_isna(&self) -> Series {
-        Series::new(self.data.clone().into_par_iter().map(|x| x.is_nan() as i32 as f64).collect())
+        if self.size() < Series::LOWER_PAR_BOUND {
+            Series::new(self.data.clone().into_iter().map(|x| x.is_nan() as i32 as f64).collect())
+        }
+        else {
+            Series::new(self.data.clone().into_par_iter().map(|x| x.is_nan() as i32 as f64).collect())
+        }
     }
 
     /// Indicates existing (non-missing) values
@@ -168,19 +152,15 @@ impl Series {
     /// assert_eq!(data.notna(), expected);
     /// ```
     pub fn notna(&self) -> Series {
-        self.seq_or_par(&Series::seq_notna, &Series::par_notna)
+        if self.size() < Series::LOWER_PAR_BOUND {
+            Series::new(self.data.clone().into_iter().map(|x| !x.is_nan() as i32 as f64).collect())
+        }
+        else {
+            Series::new(self.data.clone().into_par_iter().map(|x| !x.is_nan() as i32 as f64).collect())
+        }
     }
 
-    /// Sequential implementation of notna
-    fn seq_notna(&self) -> Series {
-        Series::new(self.data.clone().into_iter().map(|x| !x.is_nan() as i32 as f64).collect())
-    }
-
-    /// Parallel implementation of notna
-    fn par_notna(&self) -> Series {
-        Series::new(self.data.clone().into_par_iter().map(|x| !x.is_nan() as i32 as f64).collect())
-    }
-
+    /*
     /// Indicates whether or not the Series contains any elements that satisfy a predicate
     ///
     /// # Example
@@ -194,6 +174,7 @@ impl Series {
     pub fn any(&self, pred: fn(f64) -> bool) -> bool {
         self.data.clone().into_par_iter().any(pred)
     }
+    */
 
     /// Sorts the series
     ///
@@ -294,31 +275,26 @@ impl Series {
     /// assert_eq!(series.var(), expected);
     /// ```
     pub fn var(&self) -> Series {
-        self.seq_or_par(&Series::seq_var, &Series::par_var)
-    }
+        if self.size() < Series::LOWER_PAR_BOUND {
+            let valid = self.dropna();
+            if valid.is_empty() { return Series::zero() }
 
-    /// Sequential implementation of var
-    pub fn seq_var(&self) -> Series {
-        let valid = self.dropna();
-        if valid.is_empty() { return Series::zero() }
+            let n = valid.size() as f64;
+            let mean = valid.mean().iloc(0);
+            let variance = valid.data.into_iter().map(|x| pow(x-mean, 2)).sum::<f64>() / (n-1.0);
 
-        let n = valid.size() as f64;
-        let mean = valid.mean().iloc(0);
-        let variance = valid.data.into_iter().map(|x| pow(x-mean, 2)).sum::<f64>() / (n-1.0);
+            Series::new(vec![variance])
+        }
+        else {
+            let valid = self.dropna();
+            if valid.is_empty() { return Series::zero() }
 
-        Series::new(vec![variance])
-    }
+            let n = valid.size() as f64;
+            let mean = valid.mean().iloc(0);
+            let variance = valid.data.into_par_iter().map(|x| pow(x-mean, 2)).sum::<f64>() / (n-1.0);
 
-    /// Parallel implementation of var
-    pub fn par_var(&self) -> Series {
-        let valid = self.dropna();
-        if valid.is_empty() { return Series::zero() }
-
-        let n = valid.size() as f64;
-        let mean = valid.mean().iloc(0);
-        let variance = valid.data.into_par_iter().map(|x| pow(x-mean, 2)).sum::<f64>() / (n-1.0);
-
-        Series::new(vec![variance])
+            Series::new(vec![variance])
+        }
     }
 
     /// Calculates the standard deviation of values inside the Series
@@ -348,13 +324,9 @@ impl Series {
     /// assert_eq!(series.min(), expected);
     /// ```
     pub fn min(&self) -> Series {
-        self.seq_or_par(&Series::seq_min, &Series::par_min)
-    }
+        if self.is_empty() { Series::zero(); }
 
-    /// Sequential implementation of min
-    pub fn seq_min(&self) -> Series {
-        if self.is_empty() { Series::zero() }
-        else {
+        if self.size() < Series::LOWER_PAR_BOUND {
             let dropna = self.dropna();
             let m = (&dropna.data)
                 .into_iter()
@@ -362,11 +334,6 @@ impl Series {
                 .unwrap();
             Series::new(vec![*m])
         }
-    }
-
-    /// Paralell implementation of min
-    pub fn par_min(&self) -> Series {
-        if self.is_empty() { Series::zero() }
         else {
             let dropna = self.dropna();
             let m = (&dropna.data)
@@ -387,13 +354,9 @@ impl Series {
     /// assert_eq!(series.max(), expected);
     /// ```
     pub fn max(&self) -> Series {
-        self.seq_or_par(&Series::seq_max, &Series::par_max)
-    }
+        if self.is_empty() { Series::zero(); }
 
-    /// Sequential implementation of max
-    pub fn seq_max(&self) -> Series {
-        if self.is_empty() { Series::zero() }
-        else {
+        if self.size() < Series::LOWER_PAR_BOUND {
             let dropna = self.dropna();
             let m = (&dropna.data)
                 .into_iter()
@@ -401,11 +364,6 @@ impl Series {
                 .unwrap();
             Series::new(vec![*m])
         }
-    }
-
-    /// Paralell implementation of max
-    pub fn par_max(&self) -> Series {
-        if self.is_empty() { Series::zero() }
         else {
             let dropna = self.dropna();
             let m = (&dropna.data)
@@ -415,6 +373,7 @@ impl Series {
         }
     }
 
+    /*
     /// Applies a function to all elements and returns a new Series
     ///
     /// # Example
@@ -430,6 +389,7 @@ impl Series {
         let applied = (&self.data).into_par_iter().map(|x| f(*x)).collect();
         Series::new(applied)
     }
+    */
 
     /// Element wise addition
     ///
@@ -548,7 +508,7 @@ impl Series {
             else { x.to_string() + token }
         }).collect();
 
-        joined[0..joined.len() - token.len()].to_string() + "\n"
+        joined[0..joined.len() - token.len()].to_string()
     }
 
     /// Extracts a slice from the series
@@ -581,10 +541,11 @@ impl Series {
         self.data.to_vec()
     }
 
-    /// General use HOF for calling sequential/parallel depending on size of Series
-    fn seq_or_par(&self, seq: &dyn Fn(&Self) -> Series, par: &dyn Fn(&Self) -> Series) -> Series {
-        if self.size() < Series::LOWER_PAR_BOUND { seq(&self) }
-        else { par(&self) }
+    fn __str__(&self) -> &'static str {
+        Box::leak(format!("[{}]", self.join(", ")).into_boxed_str())
+    }
+    fn __repr__(&self) -> &'static str {
+        Box::leak(format!("[{}]", self.join(", ")).into_boxed_str())
     }
 }
 

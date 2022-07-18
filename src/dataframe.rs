@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use pyo3::callback::IntoPyCallbackOutput;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
@@ -9,8 +10,10 @@ use std::ops::Index;
 use std::fmt::{Display, Formatter, Result};
 use glob::glob;
 use std::collections::HashMap;
+use pyo3::prelude::*;
 
 #[derive(Debug)]
+#[pyclass]
 pub struct DataFrame {
     header_row: Vec<String>, 
     cols: Vec<Series>,
@@ -18,6 +21,7 @@ pub struct DataFrame {
     pub size: usize
 }
 
+#[pymethods]
 impl DataFrame {
     const LOWER_PAR_BOUND: usize = 8192;
 
@@ -55,6 +59,7 @@ impl DataFrame {
     /// ];
     /// let df: DataFrame = DataFrame::new(data, None);
     /// ```
+    #[new]
     pub fn new(data: Vec<Series>, header_row: Option<Vec<String>>) -> DataFrame {
         let rows = transpose(&data);
         let size = rows.len() * data.len();
@@ -196,8 +201,8 @@ impl DataFrame {
         let is_true = |x: f64| { x == 1.0};
         DataFrame::new(
             df.par_iter()
-              .filter(|s| !s.isna().any(is_true))
-              .map(|s| s.clone()).collect(),
+              .filter(|&s| !s.isna().to_vec().into_iter().any(is_true))
+              .map(|s| s.clone()).collect::<Vec<Series>>().clone(),
               header
         )
     }
@@ -479,6 +484,7 @@ impl DataFrame {
         let (df, header) = self.parse_axis(axis);
         DataFrame::new( df.par_iter().map(|s| s.max()).collect(), header )
     }
+   /* 
 
     /// Applies a function to all values inside the DataFrame
     ///
@@ -504,10 +510,11 @@ impl DataFrame {
     pub fn apply(&self, f: fn(f64) -> f64) -> DataFrame {
         let header = Some(self.header_row.clone());
         let applied = (&self.cols).into_par_iter()
-            .map(|x| x.apply(f))
+            .map(|x| Series::new(x.to_vec().into_par_iter().map(|x| f(x)).collect()))
             .collect();
         DataFrame::new(applied, header)
     }
+    */
 
     /// Creates a deepcopy of a DataFrame
     pub fn copy(&self) -> DataFrame {
@@ -678,18 +685,28 @@ impl DataFrame {
     }
     
     /// Generates the default header row
+    #[staticmethod]
     fn gen_default_header(len: usize) -> Vec<String> {
         (0..len).into_par_iter().map(|x| x.to_string()).collect()
     }
 
     /// Returns reference to row/column and appropriate header depending on axis
-    fn parse_axis(&self, axis: usize) -> (&Vec<Series>, Option<Vec<String>>) {
+    fn parse_axis(&self, axis: usize) -> (Vec<Series>, Option<Vec<String>>) {
         if axis == 0 {
-            (&self.cols, Some(self.header_row.clone()))
+            (self.cols.clone(), Some(self.header_row.clone()))
         }
         else {
-            (&self.rows, None)
+            (self.rows.clone(), None)
         }
+    }
+
+    fn __str__(&self) -> &'static str {
+        let out: String = self.header_row.iter().zip(&self.cols).map(|(h, d)| format!("{h}: {d}")).collect::<Vec<String>>().join(", ");
+        Box::leak(out.into_boxed_str())
+    }
+    fn __repr__(&self) -> &'static str {
+        let out: String = self.header_row.iter().zip(&self.cols).map(|(h, d)| format!("{h}: {d}")).collect::<Vec<String>>().join(", ");
+        Box::leak(out.into_boxed_str())
     }
 }
 
@@ -712,6 +729,7 @@ fn transpose(mat: &Vec<Series>) -> Vec<Series> {
 /// let df: DataFrame = dataframe::read_csv("example.csv");
 /// println!("{}", df);
 /// ```
+#[pyfunction]
 pub fn read_csv(filename: &str) -> DataFrame {
     let file = fs::read_to_string(filename).expect("Something went wrong when reading");
     let lines: Vec<&str> = file.trim().par_split('\n').collect();
@@ -735,6 +753,7 @@ pub fn read_csv(filename: &str) -> DataFrame {
 /// let dfs: Vec<DataFrame> = dataframe::read_csv_from_folder("/home/my_data/");
 /// let summed = dfs.iter().map(|d| d.sum(0)).collect();
 /// ```
+#[pyfunction]
 pub fn read_csv_from_folder(folder_name: &str) -> Vec<DataFrame> {
     let paths: Vec<std::path::PathBuf> = fs::read_dir(folder_name)
         .expect("Something went wrong")
@@ -756,6 +775,7 @@ pub fn read_csv_from_folder(folder_name: &str) -> Vec<DataFrame> {
 /// let dfs: Vec<DataFrame> = dataframe::read_csv_by_glob("/home/my_data/*SetA*");
 /// let summed = dfs.iter().map(|d| d.sum(0)).collect();
 /// ```
+#[pyfunction]
 pub fn read_csv_by_glob(path: &str, expr: &str) -> Vec<DataFrame> {
     let paths: Vec<std::path::PathBuf> = glob(format!("{}{}", path, expr).as_str()).expect("Failed to read pattern")
         .par_bridge()
@@ -781,6 +801,7 @@ pub fn read_csv_by_glob(path: &str, expr: &str) -> Vec<DataFrame> {
 /// let df = dataframe::from_hashmap(data_map);
 /// println!("{}", df);
 /// ```
+#[pyfunction]
 pub fn from_hashmap(data_map: HashMap<String, Vec<f64>>) -> DataFrame {
     let header: Vec<String> = data_map.keys().map(|x| x.clone()).collect();
     let data: Vec<Series> = data_map.values().map(|x| Series::new(x.clone())).collect();
@@ -812,3 +833,4 @@ impl Index<usize> for DataFrame {
         &self.rows[idx]
     }
 }
+
