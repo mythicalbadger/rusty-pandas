@@ -5,53 +5,10 @@ use rayon::prelude::*;
 use std::fs;
 use crate::series::*;
 use num_traits::Zero;
-use std::ops::{Index, Add, Sub, Div, Mul};
+use std::ops::Index;
 use std::fmt::{Display, Formatter, Result};
 use glob::glob;
 use std::collections::HashMap;
-
-/*
- *
- * To IMPLEMENT
- * - size (done)
- * - sum (done)
- * - mean (done)
- * - min (done)
- * - max ( done)
- * - variance (done)
- * - standard deviation (done)
- * - apply (done)
- * - copy (done)
- * - count
- * - cumsum (done)
- * - describe
- * - dot
- * - divide (done)
- * - add (done)
- * - mult (done)
- * - sub (done)
- * - dropna (done)
- * - equals (done)
- * - from_dict
- * - head (done)
- * - tail (done)
- * - insert
- * - dropna (done)
- * - median (done)
- * - mode (done)
- * - read_csv (done)
- * - read_excel
- * - to_csv (done)
- * - prod (done)
- * - to_dict (done)
- * - from_dict (done)
- * - transpose (done)
- * - read_csv from folder (done)
- * - read_csv from glob (done)
- * - iloc (done)
- * - loc
- *
- */
 
 #[derive(Debug)]
 pub struct DataFrame {

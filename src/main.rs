@@ -1,7 +1,6 @@
 extern crate num_traits;
 extern crate rayon;
 extern crate glob;
-extern crate chashmap;
 mod dataframe;
 mod series;
 use std::time::Instant;
@@ -30,9 +29,6 @@ fn main() {
     println!("{}", second);
     */
 
-    let df = dataframe::read_csv("./res/example.csv");
-    println!("{}", df.loc_col("BBQ"));
-    
 }
 
 #[cfg(test)]
