@@ -31,7 +31,7 @@ fn main() {
     */
 
     let df = dataframe::read_csv("./res/example.csv");
-    println!("{}", df.cumsum(0));
+    println!("{}", df.loc_col("BBQ"));
     
 }
 

@@ -23,10 +23,13 @@ use std::collections::HashMap;
  * - apply (done)
  * - copy (done)
  * - count
- * - cumsum
+ * - cumsum (done)
  * - describe
  * - dot
- * - divide
+ * - divide (done)
+ * - add (done)
+ * - mult (done)
+ * - sub (done)
  * - dropna (done)
  * - equals (done)
  * - from_dict
@@ -42,9 +45,11 @@ use std::collections::HashMap;
  * - prod (done)
  * - to_dict (done)
  * - from_dict (done)
- * - transpose 
+ * - transpose (done)
  * - read_csv from folder (done)
  * - read_csv from glob (done)
+ * - iloc (done)
+ * - loc
  *
  */
 
@@ -112,14 +117,20 @@ impl DataFrame {
         }
     }
     
-    /// Extract a row from the DataFrame
+    /// Extract a row from the DataFrame by index
     pub fn irow(&self, row: usize) -> Series {
         self.rows[row].clone()
     }
 
-    /// Extract a column from the DataFrame
+    /// Extract a column from the DataFrame by index
     pub fn icol(&self, col: usize) -> Series {
         self.cols[col].clone()
+    }
+
+    /// Extract a column from the DataFrame by name
+    pub fn loc_col(&self, col_name: &str) -> Series {
+        let idx = self.header_row.iter().position(|c| c == col_name).unwrap();
+        self.icol(idx)
     }
 
     /// Returns the length/size of DataFrame
