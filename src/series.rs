@@ -323,6 +323,43 @@ impl Series {
         Series::new((&self.data).into_par_iter().map(|x| x / n).collect())
     }
 
+    /// Calculates the cumulative/prefix sum of a Series
+    pub fn cumsum(&self) -> Series {
+        // This looks awfully familiar
+        fn prefix_sum(xs: &Vec<f64>) -> (Vec<f64>, f64) {    
+            if xs.is_empty() { return (vec![], 0.0); }    
+
+            // Speeds it up quite a bit    
+            if xs.len() < 512 {    
+                let mut pfs: Vec<f64> = vec![0.0];
+                for i in 0..xs.len() {
+                    pfs.push(xs[0..i+1].iter().sum());    
+                }    
+                return (pfs[0..pfs.len()-1].to_vec(), pfs[pfs.len()-1])    
+            }    
+
+            let half = xs.len() / 2;
+            let (c_prefix, mut c_sum) = prefix_sum(
+                &(0..half).into_par_iter()
+                .map(|i| xs[i*2] + xs[i*2+1]) 
+                .collect::<Vec<f64>>()    
+              );    
+
+            let mut pfs: Vec<f64> = (0..half).into_par_iter() 
+                .flat_map(|i| vec![c_prefix[i], c_prefix[i]+xs[2*i]]) 
+                .collect();    
+
+            if xs.len() % 2 == 1 { pfs.push(c_sum); c_sum += xs[xs.len() - 1]; }    
+
+            (pfs, c_sum)    
+        }
+
+        let (mut pfs, c_sum) = prefix_sum(&self.data);
+        pfs.drain(0..1);
+        pfs.push(c_sum);
+        Series::new(pfs)
+    }
+
     /// Joins the Series into string
     pub fn join(&self, token: &str) -> String {
         let joined: String = (&self.data).into_par_iter().map(|x| {

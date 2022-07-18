@@ -29,13 +29,9 @@ fn main() {
     println!("{}", first);
     println!("{}", second);
     */
-    use std::collections::HashMap;
-    let mut test_map: HashMap<String, Vec<f64>> = HashMap::new();
-    test_map.insert("Column 1".to_string(), vec![1.0, 2.0, 3.0, 4.0, 5.0]);
-    test_map.insert("Column 2".to_string(), vec![10.0, 20.0, 30.0, 40.0, f64::NAN]);
-    test_map.insert("Column 3".to_string(), vec![100.0, 200.0, 300.0, 400.0, 500.0]);
-    let df = dataframe::from_hashmap(test_map);
-    println!("{}", df.div(5.0));
+
+    let df = dataframe::read_csv("./res/example.csv");
+    println!("{}", df.cumsum(0));
     
 }
 

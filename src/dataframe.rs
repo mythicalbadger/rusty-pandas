@@ -288,6 +288,12 @@ impl DataFrame {
             .collect();
         DataFrame::new(applied, header)
     }
+
+    /// Computes the cumulative/prefix sum over all rows/cols of the DataFrame
+    pub fn cumsum(&self, axis: usize) -> DataFrame {
+        let (df, header) = self.parse_axis(axis);
+        DataFrame::new(df.into_par_iter().map(|s| s.cumsum()).collect(), header)
+    }
 }
 
 pub fn transpose(mat: &Vec<Series>) -> Vec<Series> {
