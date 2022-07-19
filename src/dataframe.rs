@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use pyo3::callback::IntoPyCallbackOutput;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
@@ -63,8 +62,13 @@ impl DataFrame {
     pub fn new(data: Vec<Series>, header_row: Option<Vec<String>>) -> DataFrame {
         let rows = transpose(&data);
         let size = rows.len() * data.len();
+        let header = header_row.unwrap_or(
+            DataFrame::gen_default_header(
+                rows.get(0).unwrap_or(&Series::zero()).size()
+            )
+        );
         DataFrame { 
-            header_row : header_row.unwrap_or(DataFrame::gen_default_header(rows.get(0).unwrap_or(&Series::zero()).size())), 
+            header_row : header,
             cols : data, 
             rows,
             size 
@@ -731,22 +735,37 @@ fn transpose(mat: &Vec<Series>) -> Vec<Series> {
 /// ```
 #[pyfunction]
 pub fn read_csv(filename: &str) -> DataFrame {
+    // Read the entire file to a String
     let file = fs::read_to_string(filename).expect("Something went wrong when reading");
-    let lines: Vec<&str> = file.trim().par_split('\n').collect();
-    let header_row: Vec<String> = lines[0].par_split(',').map(|x| String::from(x)).collect();
-    let data: Vec<Series> = lines[1..].par_iter().map(|&line| {
-        Series::new(line.par_split(',').map(|elt| {
-            match elt.parse::<f64>() {
-                Ok(f) => f,
-                Err(_) => f64::NAN
-            }
-        }).collect())
+    // Split into lines
+    let lines: Vec<&str> = file.par_lines().collect();
+    // Extract header row
+    let header_row: Vec<String> = (&lines[0]).par_split(',').map(|x| String::from(x)).collect();
+    // Parse data into numeric values
+    let data: Vec<Series> = (&lines[1..]).into_par_iter().map(|line| {
+        Series::new(
+            line.split(',').map(|elt| { // split has better performance than par_split here
+                match elt.parse::<f64>() {
+                    Ok(f) => f,
+                    Err(_) => f64::NAN
+                }
+            }).collect()
+        )
     }).collect();
+
+    // Transpose to get columns
     let df_data = transpose(&data);
-    DataFrame::new(df_data, Some(header_row))
+    let size = data.len() * df_data.len();
+
+    DataFrame {
+        header_row,
+        cols: df_data,
+        rows: data,
+        size
+    }
 }
 
-/// Reads CSV files from a specified folter into a Vector of DataFrames
+/// Reads CSV files from a specified folder into a Vector of DataFrames
 ///
 /// # Examples
 /// ```
