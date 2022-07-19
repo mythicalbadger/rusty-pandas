@@ -104,6 +104,7 @@ For the `DataFrame` object and `dataframe` module
 |`read_csv_from_folder(folder_name: &str) -> Vec<DataFrame>`| Reads CSV files from a specified folder into a Vector of DataFrames
 `read_csv_by_glob(path: &str, expr: &str) -> Vec<DataFrame>`| Reads CSV files whose names match a specified pattern into a Vector of DataFrames
 |`from_hashmap(data_map: std::collections::HashMap<String, Vec<f64>>) -> DataFrame`| Creates a DataFrame from a Rust `HashMap`
+
 A lot of these still have room for improvement.
 
 ## Benchmarks
