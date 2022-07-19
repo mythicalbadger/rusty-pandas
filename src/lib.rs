@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 pub mod series;
 pub mod dataframe;
+mod funky_functions;
 
 pub use series::Series;
 pub use dataframe::DataFrame;

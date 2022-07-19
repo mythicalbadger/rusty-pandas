@@ -20,6 +20,17 @@ pub struct DataFrame {
     pub size: usize
 }
 
+macro_rules! parse_axis {
+    ($self:ident, $method:ident, $axis: expr) => {
+        if $axis == 0 { 
+            DataFrame::new($self.cols.par_iter().map(|s| s.$method()).collect(), Some($self.header_row.clone())) 
+        }
+        else { 
+            DataFrame::new($self.rows.par_iter().map(|s| s.$method()).collect(), None) 
+        }
+    };
+}
+
 #[pymethods]
 impl DataFrame {
     const LOWER_PAR_BOUND: usize = 8192;
@@ -201,14 +212,23 @@ impl DataFrame {
     /// println!("{}", df.dropna(1));
     /// ```
     pub fn dropna(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
         let is_true = |x: f64| { x == 1.0};
-        DataFrame::new(
-            df.par_iter()
-              .filter(|&s| !s.isna().to_vec().into_iter().any(is_true))
-              .map(|s| s.clone()).collect::<Vec<Series>>().clone(),
-              header
-        )
+        if axis == 0 {
+            DataFrame::new(
+                self.cols.par_iter()
+                  .filter(|&s| !s.isna().to_vec().into_iter().any(is_true))
+                  .map(|s| s.clone()).collect::<Vec<Series>>().clone(),
+                  Some(self.header_row.clone())
+            )
+        }
+        else {
+            DataFrame::new(
+                self.rows.par_iter()
+                  .filter(|&s| !s.isna().to_vec().into_iter().any(is_true))
+                  .map(|s| s.clone()).collect::<Vec<Series>>().clone(),
+                  None
+            )
+        }
     }
 
     /// Alias for dropna
@@ -242,10 +262,8 @@ impl DataFrame {
     /// println!("{}", df.sum(1))
     /// ```
     pub fn sum(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new(df.par_iter().map(|s| s.sum()).collect(), header)
+        parse_axis!(self, sum, axis)
     }
-
 
     /// Computes the product over values for each Series in the DataFrame
     ///
@@ -273,8 +291,7 @@ impl DataFrame {
     /// println!("{}", df.prod(1))
     /// ```
     pub fn prod(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new(df.par_iter().map(|s| s.prod()).collect(), header)
+        parse_axis!(self, prod, axis)
     }
 
     /// Calculates the mean for each Series in the DataFrame
@@ -303,8 +320,7 @@ impl DataFrame {
     /// println!("{}", df.mean(1))
     /// ```
     pub fn mean(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new( df.par_iter().map(|s| s.mean()).collect(), header )
+        parse_axis!(self, mean, axis)
     }
 
     /// Calculates the median for each Series in the DataFrame
@@ -333,8 +349,7 @@ impl DataFrame {
     /// println!("{}", df.median(1))
     /// ```
     pub fn median(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new( df.par_iter().map(|s| s.median()).collect(), header )
+        parse_axis!(self, median, axis)
     }
 
     /// Calculates the mode for each Series in the DataFrame
@@ -363,8 +378,7 @@ impl DataFrame {
     /// println!("{}", df.mode(1))
     /// ```
     pub fn mode(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new( df.par_iter().map(|s| s.mode()).collect(), header )
+        parse_axis!(self, mode, axis)
     }
 
     /// Calculates the variance for each Series in the DataFrame
@@ -394,8 +408,7 @@ impl DataFrame {
     /// ```
     pub fn var(&self, axis: usize) -> DataFrame {
         let valid = self.dropna(axis);
-        let (df, header) = valid.parse_axis(axis);
-        DataFrame::new( df.par_iter().map(|s| s.var()).collect(), header )
+        parse_axis!(valid, var, axis)
     }
 
     /// Calculates the standard deviation for each Series in the DataFrame
@@ -425,8 +438,7 @@ impl DataFrame {
     /// ```
     pub fn std(&self, axis: usize) -> DataFrame {
         let valid = self.dropna(axis);
-        let (df, header) = valid.parse_axis(axis);
-        DataFrame::new( df.par_iter().map(|s| s.std()).collect(), header )
+        parse_axis!(valid, std, axis)
     }
 
     /// Calculates the minimum for each Series in the DataFrame
@@ -455,8 +467,7 @@ impl DataFrame {
     /// println!("{}", df.min(1))
     /// ```
     pub fn min(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new( df.par_iter().map(|s| s.min()).collect(), header )
+        parse_axis!(self, min, axis)
     }
 
     /// Calculates the maximum for each Series in the DataFrame
@@ -485,8 +496,7 @@ impl DataFrame {
     /// println!("{}", df.max(1))
     /// ```
     pub fn max(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new( df.par_iter().map(|s| s.max()).collect(), header )
+        parse_axis!(self, max, axis)
     }
    /* 
 
@@ -684,24 +694,13 @@ impl DataFrame {
     /// println!("{}", df.cumsum(1));
     /// ```
     pub fn cumsum(&self, axis: usize) -> DataFrame {
-        let (df, header) = self.parse_axis(axis);
-        DataFrame::new(df.into_par_iter().map(|s| s.cumsum()).collect(), header)
+        parse_axis!(self, cumsum, axis)
     }
     
     /// Generates the default header row
     #[staticmethod]
     fn gen_default_header(len: usize) -> Vec<String> {
         (0..len).into_par_iter().map(|x| x.to_string()).collect()
-    }
-
-    /// Returns reference to row/column and appropriate header depending on axis
-    fn parse_axis(&self, axis: usize) -> (Vec<Series>, Option<Vec<String>>) {
-        if axis == 0 {
-            (self.cols.clone(), Some(self.header_row.clone()))
-        }
-        else {
-            (self.rows.clone(), None)
-        }
     }
 
     fn __str__(&self) -> &'static str {
@@ -744,7 +743,7 @@ pub fn read_csv(filename: &str) -> DataFrame {
     // Parse data into numeric values
     let data: Vec<Series> = (&lines[1..]).into_par_iter().map(|line| {
         Series::new(
-            line.split(',').map(|elt| { // split has better performance than par_split here
+            line.split(",").map(|elt| { // split has better performance than par_split here
                 match elt.parse::<f64>() {
                     Ok(f) => f,
                     Err(_) => f64::NAN
