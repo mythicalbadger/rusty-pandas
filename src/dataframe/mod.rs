@@ -696,6 +696,46 @@ impl DataFrame {
     pub fn cumsum(&self, axis: usize) -> DataFrame {
         parse_axis!(self, cumsum, axis)
     }
+
+    /// Returns a new DataFrame with a new column inserted into it 
+    ///
+    /// # Examples
+    ///
+    /// Create a new DataFrame of the form and adds a column for Weight
+    /// | UserID |  Age  | Height |
+    /// |   0    |   42  |  183   |
+    /// |   1    |   21  |  160   |
+    /// |   2    |   8   |  132   |
+    /// ```
+    ///
+    /// let header: Vec<String> = vec!["UserID".to_string(), "Age".to_string(), "Height".to_string()];
+    /// let data: Vec<Series> = vec![
+    ///     Series::new(vec![0.0, 1.0, 2.0]),
+    ///     Series::new(vec![42.0, 21.0, 8.0]),
+    ///     Series::new(vec![183.0, 160.0, 132.0])
+    /// ];
+    ///
+    /// let weight_data: Series = Series::new(vec![100.0, 300.0, 77.0]);
+    /// let df: DataFrame = DataFrame::new(data, Some(header));
+    /// let df = df.insert_col(3, "Weight" weight_data);
+    /// println!("{}", df);
+    /// ```
+    pub fn insert_col(&self, pos: usize, column_name: &str, column: Series) -> DataFrame {
+        // Suckier than normal insertion since we are creating an entirely new DataFrame
+        if pos > self.cols.len() + 1 { panic!("Invalid index"); }
+        let mut cols = self.cols.clone();
+        let mut headers = self.header_row.clone();
+        cols.insert(pos, column);
+        headers.insert(pos, column_name.to_string());
+        let size = cols.len() * self.rows.len();
+
+        DataFrame {
+            header_row: headers,
+            cols,
+            rows: self.rows.clone(),
+            size
+        }
+    }
     
     /// Generates the default header row
     #[staticmethod]

@@ -104,6 +104,7 @@ For the `DataFrame` object and `dataframe` module
 | `mult(n: f64) -> DataFrame`| Multiplies a value to all elements in the DataFrame
 | `div(n: f64) -> DataFrame`| Divides all elements in the DataFrame by a value
 | `cumsum(axis: usize) -> DataFrame`| Computes the cumulative/prefix sum for each Series in the DataFrame over an axis
+| `insert_col(pos: usize, column_name: &str, column: Series) -> DataFrame`| Returns a new DataFrame with a new column inserted into it 
 |`read_csv(filename: &str) -> DataFrame`| Reads a CSV file into a DataFrame
 |`read_csv_from_folder(folder_name: &str) -> Vec<DataFrame>`| Reads CSV files from a specified folder into a Vector of DataFrames
 `read_csv_by_glob(path: &str, expr: &str) -> Vec<DataFrame>`| Reads CSV files whose names match a specified pattern into a Vector of DataFrames
