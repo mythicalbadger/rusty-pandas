@@ -68,6 +68,8 @@ For `Series`
 | `join(token: &str) -> String`| Joins the Series into string
 | `slice(start: usize, end: usize) -> String`| Extracts a slice from the Series
 | `dot(other: Series) -> Series`| Computes the dot product of the Series and another
+| `vadd(other: Series) -> Series| Computes the vector sum of the Series and another
+| `vsub(other: Series) -> Series| Computes vector subtraction of the Series and another
 |`to_vec() -> Vec<f64>`| Converts the Series to a `Vector` of `f64`
 
 For the `DataFrame` object and `dataframe` module

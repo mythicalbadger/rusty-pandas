@@ -538,7 +538,7 @@ impl Series {
     /// assert_eq!(a.dot(b).iloc(0), 12.0);
     /// ```
     pub fn dot(&self, other: Series) -> Series {
-        if self.size() != other.size() { panic!("Series must have same dimensions to compute dot product"); }
+        if self.size() != other.size() { panic!("Series must have same dimensions"); }
         Series::new(
             vec![
                 self.data.par_iter()
@@ -546,6 +546,42 @@ impl Series {
                     .map(|(&a, &b)| a * b)
                     .sum()
             ]
+        )
+    }
+
+    /// Computes the vector sum of the Series and another
+    ///
+    /// # Example
+    /// ```
+    /// let a = Series::new(vec![1.0, 2.0, 3.0]);
+    /// let b = Series::new(vec![4.0, -5.0, 6.0]);
+    /// assert_eq!(a.vadd(b), Series::new(vec![5.0, -3.0, 9.0]));
+    /// ```
+    pub fn vadd(&self, other: Series) -> Series {
+        if self.size() != other.size() { panic!("Series must have same dimensions"); }
+        Series::new(
+            self.data.par_iter()
+                .zip(other.data.par_iter())
+                .map(|(&a, &b)| a + b)
+                .collect()
+        )
+    }
+
+    /// Computes vector subtraction of the Series and another
+    ///
+    /// # Example
+    /// ```
+    /// let a = Series::new(vec![1.0, 2.0, 3.0]);
+    /// let b = Series::new(vec![4.0, -5.0, 6.0]);
+    /// assert_eq!(a.vsub(b), Series::new(vec![-3.0, 7.0, -3.0]));
+    /// ```
+    pub fn vsub(&self, other: Series) -> Series {
+        if self.size() != other.size() { panic!("Series must have same dimensions"); }
+        Series::new(
+            self.data.par_iter()
+                .zip(other.data.par_iter())
+                .map(|(&a, &b)| a - b)
+                .collect()
         )
     }
 
