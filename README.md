@@ -65,8 +65,9 @@ For `Series`
 | `mult(n: f64) -> Series`| Element wise multiplication
 | `div(n: f64) -> Series`| Element wise division
 | `cumsum() -> Series`| Calculates the cumulative/prefix sum of a Series
-|`join(token: &str) -> String`| Joins the Series into string
-|`slice(start: usize, end: usize) -> String`| Extracts a slice from the Series
+| `join(token: &str) -> String`| Joins the Series into string
+| `slice(start: usize, end: usize) -> String`| Extracts a slice from the Series
+| `dot(other: Series) -> Series`| Computes the dot product of the Series and another
 |`to_vec() -> Vec<f64>`| Converts the Series to a `Vector` of `f64`
 
 For the `DataFrame` object and `dataframe` module

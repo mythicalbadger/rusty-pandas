@@ -528,6 +528,27 @@ impl Series {
         Series::new(slice)
     }
 
+
+    /// Computes the dot product of the Series and another
+    ///
+    /// # Example
+    /// ```
+    /// let a = Series::new(vec![1.0, 2.0, 3.0]);
+    /// let b = Series::new(vec![4.0, -5.0, 6.0]);
+    /// assert_eq!(a.dot(b).iloc(0), 12.0);
+    /// ```
+    pub fn dot(&self, other: Series) -> Series {
+        if self.size() != other.size() { panic!("Series must have same dimensions to compute dot product"); }
+        Series::new(
+            vec![
+                self.data.par_iter()
+                    .zip(other.data.par_iter())
+                    .map(|(&a, &b)| a * b)
+                    .sum()
+            ]
+        )
+    }
+
     /// Converts the Series to a Vector of f64
     ///
     /// # Example
