@@ -590,7 +590,7 @@ impl Series {
     /// # Example
     /// ```
     /// let a = Series::new(vec![2.0, -2.0, 3.0, -4.0]);
-    /// assert_eq!(a.vsub(b), Series::new(vec![-3.0, 7.0, -3.0]));
+    /// assert_eq!(a.norm().iloc(0), 33f64.sqrt());
     /// ```
     pub fn norm(&self) -> Series {
         Series::new(
