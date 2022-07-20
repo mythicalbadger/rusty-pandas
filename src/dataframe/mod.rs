@@ -10,6 +10,7 @@ use std::fmt::{Display, Formatter, Result};
 use glob::glob;
 use std::collections::HashMap;
 use pyo3::prelude::*;
+use prettytable::{Table, Row};
 
 #[derive(Debug)]
 #[pyclass]
@@ -868,8 +869,17 @@ pub fn from_hashmap(data_map: HashMap<String, Vec<f64>>) -> DataFrame {
 
 impl Display for DataFrame {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        let out: Vec<String> = self.header_row.iter().zip(&self.cols).map(|(h, d)| format!("{h}: {d}")).collect();
-        write!(f, "{:?}", out.join(", "))
+        let mut table = Table::new();
+
+        if self.rows.len() < 10 && self.cols.len() < 10 {
+            table.add_row(Row::from(self.header_row.clone()));
+            for row in &self.rows {
+                let _ = table.add_row(Row::from(row.to_vec()));
+            }
+        }
+        //let out: Vec<String> = self.header_row.iter().zip(&self.cols).map(|(h, d)| format!("{h}: {d}")).collect();
+        table.printstd();
+        Ok(())
     }
 }
 
