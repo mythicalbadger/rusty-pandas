@@ -15,7 +15,6 @@ fn gen_vec(n: usize) -> Vec<f64> {
 
 fn main() {
     use series::Series;
-    let a = Series::new(vec![1.0, 2.0, 3.0]);
-    let b = Series::new(vec![4.0, -5.0, 6.0]);
-    println!("{}", a.vsub(b));
+    let a = Series::new(vec![2.0, -2.0, 3.0, -4.0]);
+    assert_eq!(a.norm().iloc(0), 33f64.sqrt())
 }

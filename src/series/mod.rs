@@ -585,6 +585,24 @@ impl Series {
         )
     }
 
+    /// Computes the norm/magnitude of the Series
+    ///
+    /// # Example
+    /// ```
+    /// let a = Series::new(vec![2.0, -2.0, 3.0, -4.0]);
+    /// assert_eq!(a.vsub(b), Series::new(vec![-3.0, 7.0, -3.0]));
+    /// ```
+    pub fn norm(&self) -> Series {
+        Series::new(
+            vec![
+                self.data.par_iter()
+                    .map(|&x| pow(x, 2))
+                    .sum::<f64>()
+                    .sqrt()
+            ]
+        )
+    }
+
     /// Converts the Series to a Vector of f64
     ///
     /// # Example
