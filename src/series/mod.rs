@@ -643,6 +643,15 @@ macro_rules! from_vec_type {
         }
     }
 }
+macro_rules! from_vec_ref_type {
+    ($type:ty) => {
+        impl From<&Vec<$type>> for Series {
+            fn from(val: &Vec<$type>) -> Self {
+                Series { data: val.iter().map(|&x| x as f64).collect() }
+            }
+        }
+    }
+}
 
 macro_rules! from_range_type {
     ($type:ty) => {
@@ -706,6 +715,7 @@ from_num_type!(u16);
 from_num_type!(u32);
 from_num_type!(u64);
 
+from_vec_type!(f64);
 from_vec_type!(f32);
 from_vec_type!(i8);
 from_vec_type!(i16);
@@ -715,6 +725,17 @@ from_vec_type!(u8);
 from_vec_type!(u16);
 from_vec_type!(u32);
 from_vec_type!(u64);
+
+from_vec_ref_type!(f64);
+from_vec_ref_type!(f32);
+from_vec_ref_type!(i8);
+from_vec_ref_type!(i16);
+from_vec_ref_type!(i32);
+from_vec_ref_type!(i64);
+from_vec_ref_type!(u8);
+from_vec_ref_type!(u16);
+from_vec_ref_type!(u32);
+from_vec_ref_type!(u64);
 
 from_range_type!(i8);
 from_range_type!(i16);

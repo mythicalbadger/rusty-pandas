@@ -892,3 +892,57 @@ impl Index<usize> for DataFrame {
     }
 }
 
+macro_rules! from_vec_type {
+    ($type:ty) => {
+        impl From<Vec<$type>> for DataFrame {
+            fn from(data: Vec<$type>) -> Self {
+                DataFrame::new(vec![Series::from(data)], None)
+            }
+        }
+    }
+}
+
+macro_rules! from_2d_vec_type {
+    ($type:ty) => {
+        impl From<Vec<Vec<$type>>> for DataFrame {
+            fn from(data: Vec<Vec<$type>>) -> Self {
+                let rows = data.iter().map(|x| Series::from(x)).collect();
+                let cols = transpose(&rows);
+                let size = rows.len() * cols.len();
+                let headers = DataFrame::gen_default_header(
+                    rows.get(0).unwrap_or(&Series::zero()).size()
+                );
+
+                DataFrame {
+                   header_row: headers,
+                   cols,
+                   rows,
+                   size
+                }
+
+            }
+        }
+    }
+}
+
+from_vec_type!(f64);
+from_vec_type!(f32);
+from_vec_type!(i8);
+from_vec_type!(i16);
+from_vec_type!(i32);
+from_vec_type!(i64);
+from_vec_type!(u8);
+from_vec_type!(u16);
+from_vec_type!(u32);
+from_vec_type!(u64);
+
+from_2d_vec_type!(f64);
+from_2d_vec_type!(f32);
+from_2d_vec_type!(i8);
+from_2d_vec_type!(i16);
+from_2d_vec_type!(i32);
+from_2d_vec_type!(i64);
+from_2d_vec_type!(u8);
+from_2d_vec_type!(u16);
+from_2d_vec_type!(u32);
+from_2d_vec_type!(u64);

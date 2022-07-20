@@ -15,7 +15,12 @@ fn gen_vec(n: usize) -> Vec<f64> {
 
 fn main() {
     use series::Series;
-    let a = 1..11;
-    let a = Series::from(a);
-    println!("{}", a);
+    use dataframe::DataFrame;
+    let a = vec![
+        vec![1, 2, 3, 4, 5],
+        vec![6, 7, 8, 9, 10],
+        vec![11, 12, 13, 14, 15]
+    ];
+    let df = DataFrame::from(a);
+    println!("{}", df);
 }
