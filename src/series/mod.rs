@@ -624,6 +624,46 @@ impl Series {
     }
 }
 
+macro_rules! from_num_type {
+    ($type:ty) => {
+        impl From<$type> for Series {
+            fn from(val: $type) -> Self {
+                Self { data: vec![val as f64] }
+            }
+        }
+    }
+}
+
+macro_rules! from_vec_type {
+    ($type:ty) => {
+        impl From<Vec<$type>> for Series {
+            fn from(val: Vec<$type>) -> Self {
+                Series { data: val.iter().map(|&x| x as f64).collect() }
+            }
+        }
+    }
+}
+
+macro_rules! from_range_type {
+    ($type:ty) => {
+        impl From<Range<$type>> for Series {
+            fn from(val: Range<$type>) -> Self {
+                Self { data: val.map(|x| x as f64).collect() }
+            }
+        }
+    }
+}
+
+macro_rules! from_range_incl_type {
+    ($type:ty) => {
+        impl From<RangeInclusive<$type>> for Series {
+            fn from(val: RangeInclusive<$type>) -> Self {
+                Self { data: val.map(|x| x as f64).collect() }
+            }
+        }
+    }
+}
+
 impl std::fmt::Display for Series {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self.data)
@@ -655,3 +695,41 @@ impl PartialEq for Series {
 
 impl Eq for Series {}
 
+from_num_type!(f64);
+from_num_type!(f32);
+from_num_type!(i8);
+from_num_type!(i16);
+from_num_type!(i32);
+from_num_type!(i64);
+from_num_type!(u8);
+from_num_type!(u16);
+from_num_type!(u32);
+from_num_type!(u64);
+
+from_vec_type!(f32);
+from_vec_type!(i8);
+from_vec_type!(i16);
+from_vec_type!(i32);
+from_vec_type!(i64);
+from_vec_type!(u8);
+from_vec_type!(u16);
+from_vec_type!(u32);
+from_vec_type!(u64);
+
+from_range_type!(i8);
+from_range_type!(i16);
+from_range_type!(i32);
+from_range_type!(i64);
+from_range_type!(u8);
+from_range_type!(u16);
+from_range_type!(u32);
+from_range_type!(u64);
+
+from_range_incl_type!(i8);
+from_range_incl_type!(i16);
+from_range_incl_type!(i32);
+from_range_incl_type!(i64);
+from_range_incl_type!(u8);
+from_range_incl_type!(u16);
+from_range_incl_type!(u32);
+from_range_incl_type!(u64);

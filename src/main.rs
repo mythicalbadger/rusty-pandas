@@ -15,9 +15,7 @@ fn gen_vec(n: usize) -> Vec<f64> {
 
 fn main() {
     use series::Series;
-    let df = dataframe::read_csv("./res/example.csv");
-    println!("{}", df);
-
-    let df = df.insert_col(6, "Cool New Column", Series::new(vec![1.0, 2.0, 3.0, 4.0, 5.0]));
-    println!("{}", df);
+    let a = 1..11;
+    let a = Series::from(a);
+    println!("{}", a);
 }
