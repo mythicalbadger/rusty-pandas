@@ -110,7 +110,25 @@ For the `DataFrame` object and `dataframe` module
 `read_csv_by_glob(path: &str, expr: &str) -> Vec<DataFrame>`| Reads CSV files whose names match a specified pattern into a Vector of DataFrames
 |`from_hashmap(data_map: std::collections::HashMap<String, Vec<f64>>) -> DataFrame`| Creates a DataFrame from a Rust `HashMap`
 
-A lot of these still have room for improvement.
+A lot of these still have room for improvement. The two also implement the following traits
+
+For `Series`
+
+| Trait | Supported Types | 
+| :--- | :--- |
+| `From`| `Series` can be constructed from `T`, `Vec<T>`, `Range<T>`, and `RangeInclusive<T>` where `T: {f32, f64, i8, i16, i32, i64, u8, u16, u32, u64}`
+| `Add`| `Series` can be concatenated through the `Add` trait
+| `Zero` | Through the utilization of the `num_traits` crate, an empty `Series` can be created using `Series::zero()`
+| `PartialEq` / `Eq` | `Series` can be compared for equality through the `Eq` trait.
+| `Display` | `Series` can be displayed properly through the `Display` trait
+
+For `DataFrame`
+
+| Trait | Supported Types | 
+| :--- | :--- |
+| `From`| `DataFrame`s can be constructed from `Vec<T>` and `Vec<Vec<T>>` where `T: {f32, f64, i8, i16, i32, i64, u8, u16, u32, u64}`
+| `PartialEq` / `Eq` | `DataFrame`s can be compared for equality through the `Eq` trait.
+| `Display` | `DataFrame`s can be displayed in table form with help from the `prettytable` crate using `Display` trait
 
 ## Benchmarks
 Coming soon
