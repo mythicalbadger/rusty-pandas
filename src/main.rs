@@ -17,6 +17,6 @@ fn gen_vec(n: usize) -> Vec<f64> {
 fn main() {
     use series::Series;
     use dataframe::DataFrame;
-    let df = dataframe::read_csv("./res/example.csv");
+    let df = dataframe::read_csv("./res/Exp_EverythingCells.csv");
     println!("{}", df);
 }

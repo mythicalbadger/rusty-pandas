@@ -877,6 +877,46 @@ impl Display for DataFrame {
                 let _ = table.add_row(Row::from(row.to_vec()));
             }
         }
+        else {
+            let n = self.rows.len();
+            let mut header = vec![];
+            let mut dots = vec!["...".to_string()];
+
+            let mut header_start: Vec<String> = self.header_row[0..3].to_vec();
+            let mut header_end: Vec<String> = self.header_row[self.header_row.len() - 3..self.header_row.len()].to_vec();
+
+            header.extend(&mut header_start);
+            header.extend(&mut dots);
+            header.extend(&mut header_end);
+            
+            table.add_row(Row::from(header));
+
+            for row in &self.rows[0..3] {
+                let mut r: Vec<String> = vec![];
+                let m = row.size();
+                let start: Vec<String> = row.slice(0, 3).to_vec().iter().map(|x| format!("{x}")).collect();
+                let end: Vec<String> = row.slice(m-3, m).to_vec().iter().map(|x| format!("{x}")).collect();
+                r.extend(start);
+                r.extend(dots.clone());
+                r.extend(end);
+                table.add_row(Row::from(r));
+            }
+
+            table.add_row(Row::from(vec!["..."; 7]));
+
+            for row in &self.rows[n-3..n] {
+                let mut r: Vec<String> = vec![];
+                let m = row.size();
+                let start: Vec<String> = row.slice(0, 3).to_vec().iter().map(|x| format!("{x}")).collect();
+                let end: Vec<String> = row.slice(m-3, m).to_vec().iter().map(|x| format!("{x}")).collect();
+                r.extend(start);
+                r.extend(dots.clone());
+                r.extend(end);
+                table.add_row(Row::from(r));
+            }
+
+
+        }
         //let out: Vec<String> = self.header_row.iter().zip(&self.cols).map(|(h, d)| format!("{h}: {d}")).collect();
         table.printstd();
         Ok(())
