@@ -132,7 +132,7 @@ For `DataFrame`
 
 ## Benchmarks
 ### Setup
-The following 'benchmarks' (if you can call them that) were performed on an Asus Zenbook UX533FN with an Intel i7-8565U CPU with only NeoVim open. The CSV used was a spreadsheet containing flight data from 2008 with 29 columns and 7009729 rows that was also used for an assignment in class. There was no cherry picking, just a guy running code and putting the first ten outputs into a spreadsheet. The code for the benchmarks can be found in`benchmarks/2008_test.py`. 
+The following 'benchmarks' (if you can call them that) were performed on an Asus Zenbook UX533FN with an Intel i7-8565U CPU with only NeoVim open. The CSV used was a spreadsheet containing flight data from 2008 with 29 columns and 7009729 rows that was also used for an assignment in class. There was no cherry picking, just a guy running code and putting the first ten outputs into a spreadsheet. The code for the benchmarks can be found in `benchmarks/2008_test.py` (if you go look, note that Rusty Pandas's column axis is inverted to Pandas because I'm dumb). 
 
 There are a couple of differences that make Pandas and Rusty Pandas hard to compare -- most notably, the fact that Rusty Pandas only handles numeric data. That means if a spreadsheet contains strings, Rusty Pandas could compute the sum over an axis in under a second, while Pandas would take longer than 30 minutes (practically an "infinite speedup"). Therefore, to counteract this issue, Pandas operations were run with the `numeric_only=True` flag.
 ### Insights
