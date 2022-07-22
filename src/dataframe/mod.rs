@@ -12,6 +12,8 @@ use std::collections::HashMap;
 use pyo3::prelude::*;
 use prettytable::{Table, Row};
 
+const LOWER_PAR_BOUND: usize = 8192;
+
 #[derive(Debug)]
 #[pyclass]
 pub struct DataFrame {
@@ -24,17 +26,26 @@ pub struct DataFrame {
 macro_rules! parse_axis {
     ($self:ident, $method:ident, $axis: expr) => {
         if $axis == 0 { 
-            DataFrame::new($self.cols.par_iter().map(|s| s.$method()).collect(), Some($self.header_row.clone())) 
+            if $self.cols.len() < LOWER_PAR_BOUND {
+                DataFrame::new($self.cols.iter().map(|s| s.$method()).collect(), Some($self.header_row.clone())) 
+            }
+            else {
+                DataFrame::new($self.cols.par_iter().map(|s| s.$method()).collect(), Some($self.header_row.clone())) 
+            }
         }
         else { 
-            DataFrame::new($self.rows.par_iter().map(|s| s.$method()).collect(), None) 
+            if $self.rows.len() < LOWER_PAR_BOUND {
+                DataFrame::new($self.rows.iter().map(|s| s.$method()).collect(), None) 
+            }
+            else {
+                DataFrame::new($self.rows.par_iter().map(|s| s.$method()).collect(), None) 
+            }
         }
     };
 }
 
 #[pymethods]
 impl DataFrame {
-    const LOWER_PAR_BOUND: usize = 8192;
 
     /// Creates a new DataFrame
     ///
@@ -654,7 +665,7 @@ impl DataFrame {
     /// Multiplies a value to all elements in the DataFrame
     pub fn mult(&self, n: f64) -> DataFrame {
         let header = Some(self.header_row.clone());
-        let applied = (&self.cols).into_par_iter()
+        let applied = (&self.cols).iter()
             .map(|x| x.mult(n))
             .collect();
         DataFrame::new(applied, header)

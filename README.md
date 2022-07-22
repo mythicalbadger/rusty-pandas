@@ -131,4 +131,16 @@ For `DataFrame`
 | `Display` | `DataFrame`s can be displayed in table form with help from the `prettytable` crate using `Display` trait
 
 ## Benchmarks
-Coming soon
+### Setup
+The following 'benchmarks' (if you can call them that) were performed on an Asus Zenbook UX533FN with an Intel i7-8565U CPU with only NeoVim open. The CSV used was a spreadsheet containing flight data from 2008 with 29 rows and 7009729 columns that was also used for an assignment in class. There was no cherry picking, just a guy running code and putting the first ten outputs into a spreadsheet. The code for the benchmarks can be found in`benchmarks/2008_test.py`. 
+
+There are a couple of differences that make Pandas and Rusty Pandas hard to compare -- most notably, the fact that Rusty Pandas only handles numeric data. That means if a spreadsheet contains strings, Rusty Pandas could compute the sum over an axis in under a second, while Pandas would take longer than 30 minutes (practically an "infinite speedup"). Therefore, to counteract this issue, Pandas operations were run with the `numeric_only=True` flag.
+### Insights
+Upon conducting some basic benchmarks, two things became clear
+- When datasets were small, Rusty Pandas tended to be slower or the same speed as Pandas. This was to be expected, due to parallel overhead.
+- Of more interest perhaps, was that Rusty Pandas tended to perform much better with column operations than it did row operations
+I believe this can be chalked up to the fact that Rusty Pandas is primarily designed with spreadsheets that have a huge number of rows in mind (sounds counter-intuitive when I say it works better with column operations but it really isn't). If there are seven million rows, something like summing over columns allows for us to take greater advantage of parallelism.
+
+There were also some places where performance was worse, for example, element wise operations, or computing the dot product of Series. For these, I believe it would be beneficial to do some performance engineering (SIMD for dot product perhaps, although that might be slower).
+### Data
+A spreadsheet containing some basic benchmarks [can be found here](https://docs.google.com/spreadsheets/d/1ZpH7RMpotfpuGFky_-1ls36aShXh50yD_bOaytv7yls/edit?usp=sharing). They are far from comprehensive or professional. Many functions are missing, because, as noted earlier, differences in structure make the two a bit hard to compare, and not all Pandas functions have the `numeric_only` flag.

@@ -111,10 +111,10 @@ impl Series {
     /// ```
     pub fn dropna(&self) -> Series {
         if self.size() < Series::LOWER_PAR_BOUND {
-            Series::new(self.data.clone().into_iter().filter(|&x| !x.is_nan()).collect())
+            Series::new(self.data.clone().into_iter().filter(|x| !x.is_nan()).collect())
         }
         else {
-            Series::new(self.data.clone().into_par_iter().filter(|&x| !x.is_nan()).collect())
+            Series::new(self.data.clone().into_par_iter().filter(|x| !x.is_nan()).collect())
         }
     }
 
@@ -643,6 +643,7 @@ macro_rules! from_vec_type {
         }
     }
 }
+
 macro_rules! from_vec_ref_type {
     ($type:ty) => {
         impl From<&Vec<$type>> for Series {
