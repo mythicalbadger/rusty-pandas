@@ -1,4 +1,3 @@
-#[allow(dead_code)]
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::*;
@@ -69,7 +68,6 @@ fn prefix_sum(xs: &[i32]) -> (Vec<i32>, i32) {
     (pfs, c_sum)
 }
 
-#[allow(dead_code)]
 pub fn par_filter<F>(xs: Vec<(usize, char)>, p: F) -> Vec<usize>
 where 
     F: Fn((usize, char)) -> bool + Send + Sync

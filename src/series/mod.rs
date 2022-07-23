@@ -160,7 +160,6 @@ impl Series {
         }
     }
 
-    /*
     /// Indicates whether or not the Series contains any elements that satisfy a predicate
     ///
     /// # Example
@@ -171,10 +170,9 @@ impl Series {
     /// let is_even = |x: f64| -> { x % 2 == 0 };
     /// assert!(data.any(is_even));
     /// ```
-    pub fn any(&self, pred: fn(f64) -> bool) -> bool {
+    pub fn any(&self, pred: &dyn Fn(f64) -> bool) -> bool {
         self.data.clone().into_par_iter().any(pred)
     }
-    */
 
     /// Sorts the series
     ///

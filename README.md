@@ -129,6 +129,10 @@ For `DataFrame`
 | `From`| `DataFrame`s can be constructed from `Vec<T>` and `Vec<Vec<T>>` where `T: {f32, f64, i8, i16, i32, i64, u8, u16, u32, u64}`
 | `PartialEq` / `Eq` | `DataFrame`s can be compared for equality through the `Eq` trait.
 | `Display` | `DataFrame`s can be displayed in table form with help from the `prettytable` crate using `Display` trait
+### Limitations
+- Although `PyO3` worked magically for the most part, it was not a fan of passing functions as parameters, leading original method ideas like `filter`, `any`, `all`, `count`, and more to be sidelined until I find a way around it
+- As mentioned earlier, trying to get heterogeneous types was a pain, and took out a week of project time
+- A lot of the functions remain pretty broad and basic in nature
 
 ## Benchmarks
 ### Setup
