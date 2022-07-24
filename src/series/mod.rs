@@ -160,6 +160,7 @@ impl Series {
         }
     }
 
+    /*
     /// Indicates whether or not the Series contains any elements that satisfy a predicate
     ///
     /// # Example
@@ -173,6 +174,7 @@ impl Series {
     pub fn any(&self, pred: &dyn Fn(f64) -> bool) -> bool {
         self.data.clone().into_par_iter().any(pred)
     }
+    */
 
     /// Sorts the series
     ///
